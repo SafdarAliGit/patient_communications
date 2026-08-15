@@ -313,7 +313,7 @@ function initInstallPrompt(isFirstOpen) {
 		initInstallPrompt(!!firstOpen);
 	}
 
-	PC.api(“claim_device_token”, { token: token })
+	PC.call(“patient_communications.api.claim_device_token”, { token: token })
 		.then(function (result) {
 			if (!result || result.status === “locked” || result.status === “invalid”) {
 				showLocked();
