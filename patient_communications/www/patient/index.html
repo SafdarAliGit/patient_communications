@@ -182,7 +182,43 @@
 	if (isStandalone) return;
 
 	var siteTitle = {{ (site_title or 'Patient Portal') | tojson }};
-	var iconSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%233d5a99'/><path d='M145 96.5a48.5 48.5 0 0 1-48.5 48.5c-7.7 0-14.9-1.9-21.2-5.2L47 154l11-33.2A48.5 48.5 0 1 1 145 96.5z' fill='white' opacity='.92'/><path d='M82 92h28M82 108h18' stroke='%233d5a99' stroke-width='7' stroke-linecap='round'/></svg>";
+
+	function makeIconPng(size) {
+		try {
+			var c = document.createElement("canvas");
+			c.width = c.height = size;
+			var ctx = c.getContext("2d");
+			var r = size * 0.208;
+			ctx.beginPath();
+			ctx.moveTo(r, 0); ctx.arcTo(size, 0, size, r, r);
+			ctx.arcTo(size, size, size - r, size, r);
+			ctx.arcTo(0, size, 0, size - r, r);
+			ctx.arcTo(0, 0, r, 0, r);
+			ctx.closePath();
+			ctx.fillStyle = "#3d5a99";
+			ctx.fill();
+			var cx = size / 2, cy = size * 0.48, rad = size * 0.25;
+			ctx.beginPath();
+			ctx.arc(cx, cy, rad, Math.PI * 0.15, Math.PI * 1.15);
+			ctx.arc(cx - rad * 0.6, cy + rad * 0.8, rad * 0.15, Math.PI * 1.15, Math.PI * 0.15, true);
+			ctx.closePath();
+			ctx.fillStyle = "rgba(255,255,255,0.92)";
+			ctx.fill();
+			ctx.strokeStyle = "#3d5a99";
+			ctx.lineWidth = size * 0.037;
+			ctx.lineCap = "round";
+			ctx.beginPath(); ctx.moveTo(cx - size*0.1, cy - size*0.04); ctx.lineTo(cx + size*0.1, cy - size*0.04); ctx.stroke();
+			ctx.beginPath(); ctx.moveTo(cx - size*0.1, cy + size*0.04); ctx.lineTo(cx + size*0.065, cy + size*0.04); ctx.stroke();
+			return c.toDataURL("image/png");
+		} catch (e) { return null; }
+	}
+
+	var icon192 = makeIconPng(192);
+	var icon512 = makeIconPng(512);
+	var icons = [];
+	if (icon192) icons.push({ src: icon192, sizes: "192x192", type: "image/png", purpose: "any maskable" });
+	if (icon512) icons.push({ src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" });
+
 	var manifest = {
 		name: siteTitle,
 		short_name: siteTitle,
@@ -192,7 +228,7 @@
 		orientation: "portrait",
 		background_color: "#f8fafc",
 		theme_color: "#3d5a99",
-		icons: [{ src: "data:image/svg+xml," + iconSvg, sizes: "192x192 512x512", type: "image/svg+xml", purpose: "any maskable" }]
+		icons: icons
 	};
 	try {
 		var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
@@ -205,7 +241,16 @@
 	// Register service worker — required by Chrome for PWA installability.
 	// The sw lives at root scope so it can cover /patient paths.
 	if ("serviceWorker" in navigator) {
-		navigator.serviceWorker.register("/pc-sw.js").catch(function () {});
+		navigator.serviceWorker.register("/pc-sw.js").then(function (reg) {
+			if (reg.installing && !sessionStorage.getItem("pc_sw_reloaded")) {
+				reg.installing.addEventListener("statechange", function () {
+					if (this.state === "activated") {
+						sessionStorage.setItem("pc_sw_reloaded", "1");
+						location.reload();
+					}
+				});
+			}
+		}).catch(function () {});
 	}
 
 	// Capture beforeinstallprompt NOW — it fires once, early in the page
