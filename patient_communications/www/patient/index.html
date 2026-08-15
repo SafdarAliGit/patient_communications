@@ -170,8 +170,7 @@
 	<i class=”fa fa-home”></i><span class=”pwHBtnTxt”>Control Board</span>
 </a>
 <script src=”/assets/patient_communications/js/pc-common.js”></script>
-<!-- pc-patient.js is loaded dynamically after device claim succeeds so bots
-     that never run JS cannot trigger the binding side-effects. -->
+<script src=”/assets/patient_communications/js/pc-patient.js”></script>
 
 <script>
 // ── Inject PWA manifest early so the browser can find it immediately ──────────
@@ -309,12 +308,6 @@ function initInstallPrompt(isFirstOpen) {
 		}
 		if (gateLoading) gateLoading.style.display = “none”;
 		if (appEl)       appEl.style.display       = “”;
-
-		// Load patient chat JS now — only real browsers reach this point.
-		var s = document.createElement(“script”);
-		s.src = “/assets/patient_communications/js/pc-patient.js”;
-		document.body.appendChild(s);
-
 		if (typeof initInstallPrompt === “function”) initInstallPrompt(!!firstOpen);
 	}
 
