@@ -157,105 +157,137 @@
 <script src="/assets/patient_communications/js/pc-patient.js"></script>
 <script>
 (function () {
-	var app = document.getElementById("pc-app");
-	var token = app ? (app.dataset.token || "") : "";
+	var app = document.getElementById(“pc-app”);
+	var token = app ? (app.dataset.token || “”) : “”;
 	var siteTitle = {{ (site_title or 'Patient Portal') | tojson }};
-	var DISMISS_KEY = "pc_ath_dismissed";
+	// true = this is the first device to open this link (device just matched & bound)
+	var isFirstOpen = {{ 'true' if new_device_id else 'false' }};
+	var DISMISS_KEY = “pc_ath_dismissed”;
 
-	// Already installed or previously dismissed → skip
 	var isStandalone = window.navigator.standalone === true ||
-		window.matchMedia("(display-mode: standalone)").matches;
-	if (isStandalone || localStorage.getItem(DISMISS_KEY)) return;
+		window.matchMedia(“(display-mode: standalone)”).matches;
+	if (isStandalone) return;
+
+	// On first open (link matched to this device), clear any stale dismiss so
+	// the install prompt is always shown even if the patient dismissed it before.
+	if (isFirstOpen) {
+		localStorage.removeItem(DISMISS_KEY);
+	} else if (localStorage.getItem(DISMISS_KEY)) {
+		return;
+	}
 
 	var isIOS = /ipad|iphone|ipod/i.test(navigator.userAgent) && !window.MSStream;
 
-	// Inject dynamic manifest so start_url carries the patient token
+	// Inject dynamic manifest so start_url carries the patient token —
+	// the installed shortcut will open straight into this patient's portal.
 	if (token) {
-		var iconSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%233d5a99'/><path d='M145 96.5a48.5 48.5 0 0 1-48.5 48.5c-7.7 0-14.9-1.9-21.2-5.2L47 154l11-33.2A48.5 48.5 0 1 1 145 96.5z' fill='white' opacity='.92'/><path d='M82 92h28M82 108h18' stroke='%233d5a99' stroke-width='7' stroke-linecap='round'/></svg>";
+		var iconSvg = “<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%233d5a99'/><path d='M145 96.5a48.5 48.5 0 0 1-48.5 48.5c-7.7 0-14.9-1.9-21.2-5.2L47 154l11-33.2A48.5 48.5 0 1 1 145 96.5z' fill='white' opacity='.92'/><path d='M82 92h28M82 108h18' stroke='%233d5a99' stroke-width='7' stroke-linecap='round'/></svg>”;
 		var manifest = {
 			name: siteTitle,
 			short_name: siteTitle,
-			description: "Communicate with your nursing station",
+			description: “Communicate with your nursing station”,
 			start_url: location.pathname + location.search,
-			display: "standalone",
-			orientation: "portrait",
-			background_color: "#f8fafc",
-			theme_color: "#3d5a99",
+			display: “standalone”,
+			orientation: “portrait”,
+			background_color: “#f8fafc”,
+			theme_color: “#3d5a99”,
 			icons: [
-				{ src: "data:image/svg+xml," + iconSvg, sizes: "192x192 512x512", type: "image/svg+xml", purpose: "any maskable" }
+				{ src: “data:image/svg+xml,” + iconSvg, sizes: “192x192 512x512”, type: “image/svg+xml”, purpose: “any maskable” }
 			]
 		};
 		try {
-			var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
-			var mlink = document.createElement("link");
-			mlink.rel = "manifest";
+			var blob = new Blob([JSON.stringify(manifest)], { type: “application/manifest+json” });
+			var mlink = document.createElement(“link”);
+			mlink.rel = “manifest”;
 			mlink.href = URL.createObjectURL(blob);
 			document.head.appendChild(mlink);
 		} catch (e) {}
 	}
 
-	var banner   = document.getElementById("pc-install-banner");
-	var addBtn   = document.getElementById("pc-install-add");
-	var dimBtn   = document.getElementById("pc-install-dismiss");
-	var hintEl   = document.getElementById("pc-install-hint");
+	var banner   = document.getElementById(“pc-install-banner”);
+	var addBtn   = document.getElementById(“pc-install-add”);
+	var dimBtn   = document.getElementById(“pc-install-dismiss”);
+	var hintEl   = document.getElementById(“pc-install-hint”);
 	var deferredPrompt = null;
 
-	function showBanner() {
-		if (banner) banner.style.display = "flex";
-	}
-	function hideBanner(dismiss) {
-		if (banner) banner.style.display = "none";
-		if (dismiss) localStorage.setItem(DISMISS_KEY, "1");
+	// On first open: use stronger copy and hide the dismiss button so the
+	// patient is guided to install before doing anything else.
+	if (isFirstOpen) {
+		if (hintEl) hintEl.textContent = “Save a shortcut so you can reach your nursing station instantly”;
+		if (dimBtn) dimBtn.style.display = “none”;
 	}
 
-	// Android / Chrome – native install prompt
-	window.addEventListener("beforeinstallprompt", function (e) {
+	function showBanner() {
+		if (banner) banner.style.display = “flex”;
+	}
+	function hideBanner(persist) {
+		if (banner) banner.style.display = “none”;
+		if (persist) localStorage.setItem(DISMISS_KEY, “1”);
+	}
+
+	// Android / Chrome – native install prompt.
+	// On first open show the banner immediately when the browser is ready;
+	// on repeat visits use the usual 1.5 s delay.
+	window.addEventListener(“beforeinstallprompt”, function (e) {
 		e.preventDefault();
 		deferredPrompt = e;
-		if (hintEl) hintEl.textContent = "Add to your home screen for quick access";
-		if (addBtn) addBtn.style.display = "";
-		setTimeout(showBanner, 1500);
+		if (!isFirstOpen && hintEl) hintEl.textContent = “Add to your home screen for quick access”;
+		if (addBtn) addBtn.style.display = “”;
+		if (isFirstOpen) {
+			showBanner();
+		} else {
+			setTimeout(showBanner, 1500);
+		}
 	});
 
-	// iOS – show manual instructions
+	// iOS – show manual Share → Add to Home Screen instructions.
 	if (isIOS) {
-		if (hintEl) hintEl.innerHTML = "Tap <b>Share</b> ↗ then <b>“Add to Home Screen”</b>";
-		if (addBtn) addBtn.style.display = "none";
-		setTimeout(showBanner, 1500);
+		if (hintEl) hintEl.innerHTML = isFirstOpen
+			? “Tap <b>Share</b> ↗ then <b>“Add to Home Screen”</b> to save your portal shortcut”
+			: “Tap <b>Share</b> ↗ then <b>“Add to Home Screen”</b>”;
+		if (addBtn) addBtn.style.display = “none”;
+		if (isFirstOpen) {
+			showBanner();
+		} else {
+			setTimeout(showBanner, 1500);
+		}
 	}
 
-	// Fallback for other Android browsers (no prompt event) – show generic instructions
+	// Fallback: other Android browsers that never fire beforeinstallprompt.
 	if (!isIOS) {
-		window.addEventListener("load", function () {
+		window.addEventListener(“load”, function () {
 			setTimeout(function () {
-				if (!deferredPrompt && !isStandalone && banner && banner.style.display === "none") {
-					if (hintEl) hintEl.innerHTML = "Tap ⋮ menu → <b>Add to Home Screen</b>";
-					if (addBtn) addBtn.style.display = "none";
+				if (!deferredPrompt && !isStandalone && banner && banner.style.display === “none”) {
+					if (hintEl) hintEl.innerHTML = isFirstOpen
+						? “Tap ⋮ menu → <b>Add to Home Screen</b> to save your portal shortcut”
+						: “Tap ⋮ menu → <b>Add to Home Screen</b>”;
+					if (addBtn) addBtn.style.display = “none”;
 					showBanner();
 				}
-			}, 2500);
+			}, isFirstOpen ? 800 : 2500);
 		});
 	}
 
 	if (addBtn) {
-		addBtn.addEventListener("click", function () {
+		addBtn.addEventListener(“click”, function () {
 			if (deferredPrompt) {
 				deferredPrompt.prompt();
 				deferredPrompt.userChoice.then(function (choice) {
 					deferredPrompt = null;
-					hideBanner(choice.outcome === "accepted");
-					if (choice.outcome !== "accepted") hideBanner(false);
+					// Accepted: mark dismissed (shortcut created, never show again).
+					// Rejected on first open: hide this session but don't persist dismiss
+					// so the prompt reappears on the next visit.
+					hideBanner(choice.outcome === “accepted”);
 				});
 			}
 		});
 	}
 
 	if (dimBtn) {
-		dimBtn.addEventListener("click", function () { hideBanner(true); });
+		dimBtn.addEventListener(“click”, function () { hideBanner(true); });
 	}
 
-	// Hide banner once installed
-	window.addEventListener("appinstalled", function () { hideBanner(true); });
+	window.addEventListener(“appinstalled”, function () { hideBanner(true); });
 })();
 </script>
 {% endif %}
