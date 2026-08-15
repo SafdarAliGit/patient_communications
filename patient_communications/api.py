@@ -464,24 +464,18 @@ def get_pwa_manifest(token):
 
 @frappe.whitelist(allow_guest=True)
 def claim_device_token(token):
-	"""Bind or validate the patient's device against a portal token.
+	"""Validate a patient portal token.
 
-	Called by JavaScript on page load — link-preview bots (WhatsApp, Telegram,
-	iMessage…) never run JS so they can never trigger this and consume the
-	first-open slot.
+	Called by JavaScript on page load.  Link-preview bots (WhatsApp, Telegram,
+	iMessage…) never run JS so they cannot trigger this call.
 
 	Returns:
-	  {"status": "ok",     "first_open": True,  "device_id": "<uuid>"}  — first browser to open the link
-	  {"status": "ok",     "first_open": False}                          — recognised device (cookie matches)
-	  {"status": "locked"}                                               — different device already bound
-	  {"status": "invalid"}                                              — bad/expired token
+	  {"status": "ok"}      — valid token with a nursing center assigned
+	  {"status": "invalid"} — bad or expired token
 	"""
-	import uuid as _uuid
-
 	if not token:
 		return {"status": "invalid"}
 
-	# Raw lookup without the device-enforcement layer so we can compare IDs.
 	name = frappe.db.get_value("Customer", {"pc_access_token": token}, "name")
 	if not name:
 		return {"status": "invalid"}
@@ -490,23 +484,7 @@ def claim_device_token(token):
 	if not nc:
 		return {"status": "invalid"}
 
-	if not _device_field_ready():
-		return {"status": "ok", "first_open": False}
-
-	stored = frappe.db.get_value("Customer", name, "pc_device_id")
-	from_cookie = frappe.request.cookies.get("pc_device_id") if frappe.request else None
-
-	if not stored:
-		# First real browser to open this link — bind it.
-		new_id = str(_uuid.uuid4())
-		frappe.db.set_value("Customer", name, "pc_device_id", new_id, update_modified=False)
-		frappe.db.commit()
-		return {"status": "ok", "first_open": True, "device_id": new_id}
-
-	if from_cookie == stored:
-		return {"status": "ok", "first_open": False}
-
-	return {"status": "locked"}
+	return {"status": "ok"}
 
 
 # ── Portal link generation ────────────────────────────────────────────────────

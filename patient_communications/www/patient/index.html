@@ -139,31 +139,22 @@
 	var appEl       = document.getElementById("pc-app");
 	var settled     = false;
 
-	function showLocked() {
+	function showApp() {
+		if (settled) return;
+		settled = true;
+		if (gateLoading) gateLoading.style.display = "none";
+		if (appEl)       appEl.style.display       = "";
+	}
+
+	function showInvalid() {
 		if (settled) return;
 		settled = true;
 		if (gateLoading) gateLoading.style.display = "none";
 		if (gateLocked)  gateLocked.style.display  = "";
 	}
 
-	function showApp(firstOpen, deviceId) {
-		if (settled) return;
-		settled = true;
-		if (firstOpen && deviceId) {
-			document.cookie = "pc_device_id=" + deviceId + "; path=/; max-age=31536000; SameSite=Lax";
-		}
-		if (gateLoading) gateLoading.style.display = "none";
-		if (appEl)       appEl.style.display       = "";
-	}
+	setTimeout(showApp, 6000);
 
-	// Hard timeout: if the API call doesn't settle in 6 s for any reason,
-	// show the app anyway so the patient is never permanently stuck.
-	setTimeout(function () { showApp(false, null); }, 6000);
-
-	// Use native fetch instead of frappe.call — frappe.call can silently
-	// swallow errors on guest pages (e.g. showing a server-messages alert
-	// without calling the error callback), which would leave the Promise
-	// pending and the loading screen stuck forever.
 	var body = new URLSearchParams();
 	body.append("token", token);
 
@@ -175,17 +166,9 @@
 	.then(function (r) { return r.json(); })
 	.then(function (data) {
 		var result = (data || {}).message || {};
-		if (result.status === "locked" || result.status === "invalid") {
-			showLocked();
-		} else {
-			showApp(!!result.first_open, result.device_id || null);
-		}
+		if (result.status === "invalid") { showInvalid(); } else { showApp(); }
 	})
-	.catch(function () {
-		// Network error or non-JSON response — show the app optimistically;
-		// every subsequent API call re-validates the device cookie anyway.
-		showApp(false, null);
-	});
+	.catch(showApp);
 })();
 </script>
 {% endif %}
