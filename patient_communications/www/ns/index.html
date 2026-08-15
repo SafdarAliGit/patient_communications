@@ -1,0 +1,266 @@
+{% extends "templates/web.html" %}
+{% block title %}Nursing Stations — Patient Communications{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/patient_communications/css/pc.css">
+<style>
+.pci-wrap {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	min-height: 100dvh;
+	background: var(--pc-bg);
+	font-family: var(--pc-font);
+	color: var(--pc-text);
+}
+
+.pci-topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 11px 24px;
+	background: var(--pc-surface);
+	border-bottom: 1px solid var(--pc-border-soft);
+	box-shadow: var(--pc-shadow-xs);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.pci-brand {
+	display: flex;
+	align-items: center;
+	gap: 11px;
+}
+
+.pci-brand-mark {
+	width: 38px;
+	height: 38px;
+	border-radius: 11px;
+	background: var(--pc-primary);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	flex-shrink: 0;
+	box-shadow: var(--pc-shadow-sm);
+}
+
+.pci-title { font-weight: 650; font-size: 15.5px; letter-spacing: -0.01em; color: var(--pc-text); }
+.pci-subtitle { font-size: 12.5px; color: var(--pc-text-muted); }
+
+.pci-actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.pci-action-btn {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--pc-text-muted);
+	text-decoration: none;
+	padding: 7px 14px;
+	border-radius: 8px;
+	background: var(--pc-surface-alt);
+	border: 1px solid var(--pc-border-soft);
+	transition: background 0.15s, color 0.15s;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.pci-action-btn:hover { background: var(--pc-border-soft); color: var(--pc-text); }
+
+.pci-action-btn.is-primary {
+	background: var(--pc-primary);
+	color: #fff;
+	border-color: transparent;
+	box-shadow: var(--pc-shadow-sm);
+}
+
+.pci-action-btn.is-primary:hover { background: var(--pc-primary-dark); color: #fff; }
+
+.pci-body {
+	flex: 1;
+	max-width: 960px;
+	margin: 0 auto;
+	width: 100%;
+	padding: 32px 20px 56px;
+}
+
+.pci-section-head {
+	margin-bottom: 24px;
+}
+
+.pci-section-head h1 {
+	font-size: 22px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	margin: 0 0 5px;
+}
+
+.pci-section-head p {
+	font-size: 14px;
+	color: var(--pc-text-muted);
+	margin: 0;
+}
+
+/* Station grid */
+.pci-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	gap: 16px;
+}
+
+.pci-card {
+	background: var(--pc-surface);
+	border: 1px solid var(--pc-border-soft);
+	border-radius: var(--pc-radius);
+	box-shadow: var(--pc-shadow-xs);
+	padding: 22px 20px 18px;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	text-decoration: none;
+	color: var(--pc-text);
+	transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.pci-card:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--pc-shadow-md);
+}
+
+.pci-card-icon {
+	width: 48px;
+	height: 48px;
+	border-radius: 13px;
+	background: var(--pc-primary);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	font-size: 16px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	flex-shrink: 0;
+	box-shadow: var(--pc-shadow-sm);
+}
+
+.pci-card-name {
+	font-size: 15.5px;
+	font-weight: 650;
+	color: var(--pc-text);
+	line-height: 1.3;
+}
+
+.pci-card-floor {
+	font-size: 12.5px;
+	color: var(--pc-text-muted);
+	margin-top: 2px;
+}
+
+.pci-card-cta {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--pc-primary);
+	margin-top: auto;
+}
+
+.pci-empty {
+	grid-column: 1 / -1;
+	text-align: center;
+	padding: 64px 24px;
+	color: var(--pc-text-faint);
+	font-size: 14px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+}
+
+.pci-empty svg { opacity: 0.4; }
+.pci-empty strong { color: var(--pc-text-muted); font-size: 16px; }
+
+@media (max-width: 500px) {
+	.pci-topbar { padding: 10px 14px; }
+	.pci-body { padding: 20px 12px 40px; }
+	.pci-action-btn span { display: none; }
+	.pci-action-btn { padding: 8px; }
+	.pci-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+	.pci-card { padding: 16px 14px 14px; }
+}
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="pci-wrap">
+
+	<div class="pci-topbar">
+		<div class="pci-brand">
+			<div class="pci-brand-mark">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.35 0-2.6-.33-3.7-.92L3 21l1.92-5.8A8.5 8.5 0 1 1 21 11.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+			</div>
+			<div>
+				<div class="pci-title">Patient Communications</div>
+				<div class="pci-subtitle">Nursing Station Dashboards</div>
+			</div>
+		</div>
+		<div class="pci-actions">
+			<a href="/pc-assign" class="pci-action-btn is-primary">
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				<span>Assign &amp; Share</span>
+			</a>
+			<a href="/pw-home" class="pci-action-btn">
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2"/><path d="M9 22V12h6v10" stroke="currentColor" stroke-width="2"/></svg>
+				<span>Control Board</span>
+			</a>
+		</div>
+	</div>
+
+	<div class="pci-body">
+		<div class="pci-section-head">
+			<h1>Nursing Stations</h1>
+			<p>Select a station to open the real-time patient communication dashboard.</p>
+		</div>
+
+		<div class="pci-grid">
+			{% if stations %}
+				{% for s in stations %}
+				<a class="pci-card" href="{{ s.url }}">
+					<div class="pci-card-icon">{{ (s.abbreviation or s.nursing_station_name)[:2] | upper }}</div>
+					<div>
+						<div class="pci-card-name">{{ s.nursing_station_name }}</div>
+						{% if s.ward_floor %}<div class="pci-card-floor">{{ s.ward_floor }}</div>{% endif %}
+					</div>
+					<div class="pci-card-cta">
+						Open dashboard
+						<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+					</div>
+				</a>
+				{% endfor %}
+			{% else %}
+				<div class="pci-empty">
+					<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M12 12v4M10 14h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+					<strong>No nursing stations</strong>
+					<span>Create an active Nursing Station record to get started.</span>
+				</div>
+			{% endif %}
+		</div>
+	</div>
+
+</div>
+
+<a id="pwHomeBtn" href="/pw-home" title="Control Board">
+	<i class="fa fa-home"></i><span class="pwHBtnTxt">Control Board</span>
+</a>
+{% endblock %}

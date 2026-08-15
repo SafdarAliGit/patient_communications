@@ -1,0 +1,711 @@
+{% extends "templates/web.html" %}
+{% block title %}Assign Nursing Center — Patient Communications{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/patient_communications/css/pc.css">
+<style>
+/* ── Assignment page layout ── */
+.pca-wrap {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	min-height: 100dvh;
+	background: var(--pc-bg);
+	font-family: var(--pc-font);
+	color: var(--pc-text);
+}
+
+/* Top bar */
+.pca-topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 11px 24px;
+	background: var(--pc-surface);
+	border-bottom: 1px solid var(--pc-border-soft);
+	box-shadow: var(--pc-shadow-xs);
+	flex-shrink: 0;
+	position: sticky;
+	top: 0;
+	z-index: 20;
+}
+
+.pca-brand {
+	display: flex;
+	align-items: center;
+	gap: 11px;
+}
+
+.pca-brand-mark {
+	width: 38px;
+	height: 38px;
+	border-radius: 11px;
+	background: var(--pc-primary);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	flex-shrink: 0;
+	box-shadow: var(--pc-shadow-sm);
+}
+
+.pca-title { font-weight: 650; font-size: 15.5px; letter-spacing: -0.01em; color: var(--pc-text); }
+.pca-subtitle { font-size: 12.5px; color: var(--pc-text-muted); }
+
+.pca-home-link {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--pc-text-muted);
+	text-decoration: none;
+	padding: 7px 14px;
+	border-radius: 8px;
+	background: var(--pc-surface-alt);
+	border: 1px solid var(--pc-border-soft);
+	transition: background 0.15s, color 0.15s;
+	white-space: nowrap;
+}
+.pca-home-link:hover { background: var(--pc-border-soft); color: var(--pc-text); }
+.pca-home-link .fa { font-size: 15px; }
+
+/* Body */
+.pca-body {
+	flex: 1;
+	padding: 28px 28px 48px;
+	width: 100%;
+}
+
+.pca-section-head {
+	margin-bottom: 20px;
+}
+
+.pca-section-head h1 {
+	font-size: 20px;
+	font-weight: 700;
+	margin: 0 0 4px;
+	letter-spacing: -0.02em;
+}
+
+.pca-section-head p {
+	font-size: 14px;
+	color: var(--pc-text-muted);
+	margin: 0;
+}
+
+/* Search */
+.pca-search-wrap {
+	position: relative;
+	margin-bottom: 20px;
+}
+
+.pca-search-wrap::before {
+	content: "";
+	position: absolute;
+	left: 15px;
+	top: 50%;
+	width: 17px;
+	height: 17px;
+	transform: translateY(-50%);
+	opacity: 0.4;
+	background-color: var(--pc-text-muted);
+	-webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>') center / contain no-repeat;
+	mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>') center / contain no-repeat;
+	pointer-events: none;
+}
+
+.pca-search {
+	width: 100%;
+	padding: 12px 16px 12px 40px;
+	border-radius: 12px;
+	border: 1px solid var(--pc-border);
+	background: var(--pc-surface);
+	color: var(--pc-text);
+	font-size: 14.5px;
+	font-family: inherit;
+	outline: none;
+	box-shadow: var(--pc-shadow-xs);
+	transition: border-color 0.15s;
+}
+
+.pca-search::placeholder { color: var(--pc-text-faint); }
+.pca-search:focus { border-color: var(--pc-primary); }
+
+/* Patient list */
+.pca-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+	gap: 14px;
+	align-items: start;
+}
+
+/* Patient card */
+.pca-card {
+	background: var(--pc-surface);
+	border: 1px solid var(--pc-border-soft);
+	border-radius: var(--pc-radius);
+	box-shadow: var(--pc-shadow-xs);
+	padding: 18px 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	transition: box-shadow 0.15s;
+}
+
+.pca-card:hover {
+	box-shadow: var(--pc-shadow-sm);
+}
+
+.pca-card.is-assigned {
+	border-color: color-mix(in srgb, var(--pc-primary) 25%, var(--pc-border-soft));
+}
+
+.pca-card-top {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.pca-avatar {
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 650;
+	font-size: 15px;
+	flex-shrink: 0;
+	letter-spacing: 0.02em;
+	box-shadow: var(--pc-shadow-xs);
+}
+
+.pca-info { flex: 1; min-width: 0; }
+
+.pca-pname {
+	font-weight: 600;
+	font-size: 15px;
+	color: var(--pc-text);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.pca-psub {
+	font-size: 12.5px;
+	color: var(--pc-text-muted);
+	margin-top: 2px;
+}
+
+.pca-assigned-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 11.5px;
+	font-weight: 600;
+	color: var(--pc-primary);
+	background: var(--pc-primary-soft);
+	border: 1px solid color-mix(in srgb, var(--pc-primary) 20%, transparent);
+	border-radius: 999px;
+	padding: 3px 10px;
+	flex-shrink: 0;
+}
+
+/* Controls row */
+.pca-controls {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.pca-select {
+	flex: 1;
+	min-width: 200px;
+	padding: 10px 14px;
+	border-radius: 10px;
+	border: 1px solid var(--pc-border);
+	background: var(--pc-surface-alt);
+	color: var(--pc-text);
+	font-size: 14px;
+	font-family: inherit;
+	outline: none;
+	cursor: pointer;
+	transition: border-color 0.15s;
+	appearance: auto;
+}
+
+.pca-select:focus { border-color: var(--pc-primary); }
+
+.pca-assign-btn {
+	padding: 10px 20px;
+	border-radius: 10px;
+	border: none;
+	background: var(--pc-primary);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 600;
+	font-family: inherit;
+	cursor: pointer;
+	white-space: nowrap;
+	box-shadow: var(--pc-shadow-sm);
+	transition: background 0.15s, transform 0.1s;
+	flex-shrink: 0;
+}
+
+.pca-assign-btn:hover { background: var(--pc-primary-dark); }
+.pca-assign-btn:active { transform: scale(0.97); }
+.pca-assign-btn:disabled { opacity: 0.6; cursor: wait; }
+
+.pca-unassign-btn {
+	padding: 10px 16px;
+	border-radius: 10px;
+	border: none;
+	background: #e53935;
+	color: #fff;
+	font-size: 13.5px;
+	font-weight: 600;
+	font-family: inherit;
+	cursor: pointer;
+	white-space: nowrap;
+	box-shadow: var(--pc-shadow-sm);
+	transition: background 0.15s, transform 0.1s;
+	flex-shrink: 0;
+}
+.pca-unassign-btn:hover { background: #c62828; }
+.pca-unassign-btn:active { transform: scale(0.97); }
+.pca-unassign-btn:disabled { opacity: 0.6; cursor: wait; }
+
+/* Link row */
+.pca-link-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: var(--pc-surface-alt);
+	border: 1px solid var(--pc-border-soft);
+	border-radius: 10px;
+	padding: 10px 14px;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.pca-link-icon {
+	color: var(--pc-text-faint);
+	flex-shrink: 0;
+}
+
+.pca-link-url {
+	flex: 1;
+	min-width: 0;
+	font-size: 12.5px;
+	color: var(--pc-text-muted);
+	font-family: monospace;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	user-select: all;
+}
+
+.pca-link-actions {
+	display: flex;
+	gap: 7px;
+	flex-shrink: 0;
+}
+
+.pca-link-btn {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	border-radius: 8px;
+	border: 1px solid var(--pc-border);
+	background: var(--pc-surface);
+	color: var(--pc-text-muted);
+	font-size: 12.5px;
+	font-weight: 500;
+	font-family: inherit;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.pca-link-btn:hover {
+	background: var(--pc-border-soft);
+	color: var(--pc-text);
+}
+
+.pca-link-btn.is-wa {
+	color: #1a9e47;
+	border-color: color-mix(in srgb, #1a9e47 30%, var(--pc-border));
+	background: color-mix(in srgb, #1a9e47 6%, var(--pc-surface));
+}
+
+.pca-link-btn.is-wa:hover {
+	background: color-mix(in srgb, #1a9e47 12%, var(--pc-surface));
+}
+
+/* Empty / no patients */
+.pca-empty {
+	text-align: center;
+	padding: 64px 24px;
+	color: var(--pc-text-faint);
+	font-size: 14px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+}
+
+.pca-empty svg { opacity: 0.4; }
+.pca-empty strong { color: var(--pc-text-muted); font-size: 16px; }
+
+/* Responsive */
+@media (max-width: 600px) {
+	.pca-topbar { padding: 10px 14px; }
+	.pca-body { padding: 18px 12px 40px; }
+	.pca-home-link span { display: none; }
+	.pca-home-link { padding: 8px; }
+	.pca-controls { flex-direction: column; align-items: stretch; }
+	.pca-select { min-width: 0; }
+	.pca-link-url { font-size: 11.5px; }
+}
+</style>
+{% endblock %}
+
+{% block page_content %}
+
+{% if not_authorized %}
+<div class="pc-gate">
+	<div class="pc-gate-card">
+		<div class="pc-gate-icon">
+			<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+		</div>
+		<h2>Access restricted</h2>
+		<p>You must have a clinic staff role to access this page.</p>
+		<a class="pc-btn" href="/login">Sign in with a staff account</a>
+	</div>
+</div>
+
+{% else %}
+
+<div class="pca-wrap">
+
+	<div class="pca-topbar">
+		<div class="pca-brand">
+			<div class="pca-brand-mark">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.35 0-2.6-.33-3.7-.92L3 21l1.92-5.8A8.5 8.5 0 1 1 21 11.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+			</div>
+			<div>
+				<div class="pca-title">Patient Communications</div>
+				<div class="pca-subtitle">Assign &amp; Share Portal Links</div>
+			</div>
+		</div>
+		<a href="/pw-home" class="pca-home-link">
+			<i class="fa fa-home"></i>
+			<span>Control Board</span>
+		</a>
+	</div>
+
+	<div class="pca-body">
+
+		<div class="pca-section-head">
+			<h1>Assign Nursing Centers</h1>
+			<p>Select a nursing center for each admitted patient, then share their secure communication portal link.</p>
+		</div>
+
+		{% if not patients %}
+		<div class="pca-empty">
+			<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 19c.6-3.2 3-5 5.5-5s4.9 1.8 5.5 5M16 8.5a2.8 2.8 0 1 0 0-5.6M20.5 19c-.4-2.2-1.6-3.8-3.3-4.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+			<strong>No active admissions</strong>
+			<span>Patients will appear here once they have an active IPD bed allotment.</span>
+		</div>
+		{% else %}
+
+		<div class="pca-search-wrap">
+			<input class="pca-search" id="pca-search" type="text" placeholder="Search by patient name or room…" autocomplete="off">
+		</div>
+
+		<div class="pca-list" id="pca-list">
+			{% for p in patients %}
+			{% set card_id = "card-" + p.name.replace(" ", "_").replace("/", "_") %}
+			<div class="pca-card {% if p.has_link %}is-assigned{% endif %}"
+				 id="{{ card_id }}"
+				 data-pname="{{ p.patient_name | lower }}"
+				 data-room="{{ p.room_no | lower }}"
+				 data-bed="{{ p.bed_no | lower }}">
+
+				<div class="pca-card-top">
+					<div class="pca-avatar" style="background:{{ p.avatar_color }}">{{ p.initials }}</div>
+					<div class="pca-info">
+						<div class="pca-pname">{{ p.patient_name }}</div>
+						<div class="pca-psub">
+							{% if p.room_no %}Room {{ p.room_no }}{% endif %}
+							{% if p.room_no and p.bed_no %} &middot; {% endif %}
+							{% if p.bed_no %}Bed {{ p.bed_no }}{% endif %}
+						</div>
+					</div>
+					{% if p.has_link %}
+					<div class="pca-assigned-badge">
+						<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+						Assigned
+					</div>
+					{% endif %}
+				</div>
+
+				<div class="pca-controls">
+					<select class="pca-select" id="sel-{{ p.name.replace(' ','_') }}" data-patient="{{ p.name }}">
+						<option value="">— Select Nursing Center —</option>
+						{% for ns in nursing_stations %}
+						<option value="{{ ns.name }}" {% if p.nursing_center == ns.name %}selected{% endif %}>
+							{{ ns.nursing_station_name }}{% if ns.ward_floor %} — {{ ns.ward_floor }}{% endif %}
+						</option>
+						{% endfor %}
+					</select>
+					<button class="pca-assign-btn" type="button" data-patient="{{ p.name }}" data-card="{{ card_id }}">
+						Assign &amp; Get Link
+					</button>
+					{% if p.nursing_center %}
+					<button class="pca-unassign-btn" type="button" id="unassign-{{ card_id }}" data-patient="{{ p.name }}" data-card="{{ card_id }}" style="display:inline-flex;align-items:center;gap:6px;">
+						<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+						Un-Assign
+					</button>
+					{% endif %}
+				</div>
+
+				<div class="pca-link-row" id="link-{{ card_id }}" {% if not p.has_link %}style="display:none"{% endif %}>
+					<svg class="pca-link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+					<span class="pca-link-url" id="url-{{ card_id }}">{{ p.portal_url }}</span>
+					<div class="pca-link-actions">
+						<button class="pca-link-btn" type="button" onclick="pcaCopy('url-{{ card_id }}', this)">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2"/></svg>
+							Copy
+						</button>
+						{% if p.has_link %}
+						<a class="pca-link-btn is-wa" href="#" id="wa-{{ card_id }}" target="_blank" rel="noopener">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.551 4.1 1.516 5.824L0 24l6.335-1.5A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.819 9.819 0 0 1-5.007-1.37l-.36-.214-3.72.881.94-3.627-.234-.372A9.808 9.808 0 0 1 2.182 12C2.182 6.58 6.58 2.182 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg>
+							WhatsApp
+						</a>
+						{% endif %}
+					</div>
+				</div>
+
+			</div>
+			{% endfor %}
+		</div>
+
+		{% endif %}
+
+	</div><!-- .pca-body -->
+</div><!-- .pca-wrap -->
+
+<script src="/assets/patient_communications/js/pc-common.js"></script>
+<script>
+(function () {
+	// Search filter
+	var $search = document.getElementById("pca-search");
+	if ($search) {
+		$search.addEventListener("input", function () {
+			var q = this.value.toLowerCase().trim();
+			document.querySelectorAll(".pca-card").forEach(function (card) {
+				var match = !q
+					|| card.dataset.pname.includes(q)
+					|| (card.dataset.room || "").includes(q)
+					|| (card.dataset.bed || "").includes(q);
+				card.style.display = match ? "" : "none";
+			});
+		});
+	}
+
+	// Assign button
+	document.querySelectorAll(".pca-assign-btn").forEach(function (btn) {
+		btn.addEventListener("click", function () {
+			var patient = this.dataset.patient;
+			var cardId = this.dataset.card;
+			var sel = document.getElementById("sel-" + patient.replace(/ /g, "_"));
+			var nc = sel ? sel.value : "";
+
+			btn.disabled = true;
+			btn.textContent = "Saving…";
+
+			PC.call("patient_communications.api.assign_nursing_center", {
+				customer: patient,
+				nursing_center: nc,
+			}).then(function (res) {
+				btn.disabled = false;
+				btn.textContent = "Assign & Get Link";
+
+				var card = document.getElementById(cardId);
+				var linkRow = document.getElementById("link-" + cardId);
+				var urlEl = document.getElementById("url-" + cardId);
+				var waEl = document.getElementById("wa-" + cardId);
+				var badge = card ? card.querySelector(".pca-assigned-badge") : null;
+
+				if (res && res.assigned) {
+					if (urlEl) urlEl.textContent = res.portal_url;
+					if (linkRow) linkRow.style.display = "";
+					if (card) card.classList.add("is-assigned");
+
+					// Update or create WhatsApp link
+					if (waEl) {
+						waEl.href = res.whatsapp_url || "#";
+						waEl.style.display = res.whatsapp_url ? "" : "none";
+					} else if (res.whatsapp_url && linkRow) {
+						var a = document.createElement("a");
+						a.className = "pca-link-btn is-wa";
+						a.id = "wa-" + cardId;
+						a.href = res.whatsapp_url;
+						a.target = "_blank";
+						a.rel = "noopener";
+						a.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.551 4.1 1.516 5.824L0 24l6.335-1.5A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.819 9.819 0 0 1-5.007-1.37l-.36-.214-3.72.881.94-3.627-.234-.372A9.808 9.808 0 0 1 2.182 12C2.182 6.58 6.58 2.182 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg> WhatsApp';
+						var actions = linkRow.querySelector(".pca-link-actions");
+						if (actions) actions.appendChild(a);
+					}
+
+					// Badge
+					if (!badge && card) {
+						var b = document.createElement("div");
+						b.className = "pca-assigned-badge";
+						b.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Assigned';
+						var top = card.querySelector(".pca-card-top");
+						if (top) top.appendChild(b);
+					}
+
+					// Un-Assign button (add if not already present)
+					var controls = card ? card.querySelector(".pca-controls") : null;
+					if (controls && !controls.querySelector(".pca-unassign-btn")) {
+						var ub = document.createElement("button");
+						ub.className = "pca-unassign-btn";
+						ub.id = "unassign-" + cardId;
+						ub.dataset.patient = patient;
+						ub.dataset.card = cardId;
+						ub.style.cssText = "display:inline-flex;align-items:center;gap:6px;";
+						ub.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Un-Assign';
+						ub.addEventListener("click", function () {
+							if (!confirm("Remove the nursing center assignment for this patient?")) return;
+							ub.disabled = true;
+							ub.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Removing…';
+							PC.call("patient_communications.api.assign_nursing_center", {
+								customer: ub.dataset.patient,
+								nursing_center: "",
+							}).then(function () {
+								var c2 = document.getElementById(ub.dataset.card);
+								var lr2 = document.getElementById("link-" + ub.dataset.card);
+								var bg2 = c2 ? c2.querySelector(".pca-assigned-badge") : null;
+								var sl2 = document.getElementById("sel-" + ub.dataset.patient.replace(/ /g, "_"));
+								if (lr2) lr2.style.display = "none";
+								if (c2) c2.classList.remove("is-assigned");
+								if (bg2) bg2.remove();
+								if (sl2) sl2.value = "";
+								ub.remove();
+								PC.toast("Nursing center removed.");
+							}).catch(function (err) {
+								ub.disabled = false;
+								ub.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Un-Assign';
+								PC.toast("Failed to remove. Please try again.", { urgent: true });
+							});
+						});
+						controls.appendChild(ub);
+					}
+
+					PC.toast("Nursing center assigned and link ready.");
+				} else {
+					if (linkRow) linkRow.style.display = "none";
+					if (card) card.classList.remove("is-assigned");
+					if (badge) badge.remove();
+					PC.toast("Nursing center cleared.");
+				}
+			}).catch(function (err) {
+				btn.disabled = false;
+				btn.textContent = "Assign & Get Link";
+				var msg = (err && err.exc_type === "ValidationError" && err._server_messages)
+					? JSON.parse(err._server_messages || "[]").map(function(m){return JSON.parse(m).message;}).join(" ")
+					: "Failed to assign. Please try again.";
+				PC.toast(msg, { urgent: true });
+			});
+		});
+	});
+
+	// Un-Assign button
+	document.querySelectorAll(".pca-unassign-btn").forEach(function (btn) {
+		btn.addEventListener("click", function () {
+			var patient = this.dataset.patient;
+			var cardId = this.dataset.card;
+
+			if (!confirm("Remove the nursing center assignment for this patient?")) return;
+
+			btn.disabled = true;
+			btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Removing…';
+
+			PC.call("patient_communications.api.assign_nursing_center", {
+				customer: patient,
+				nursing_center: "",
+			}).then(function () {
+				var card = document.getElementById(cardId);
+				var linkRow = document.getElementById("link-" + cardId);
+				var badge = card ? card.querySelector(".pca-assigned-badge") : null;
+				var sel = document.getElementById("sel-" + patient.replace(/ /g, "_"));
+
+				if (linkRow) linkRow.style.display = "none";
+				if (card) card.classList.remove("is-assigned");
+				if (badge) badge.remove();
+				if (sel) sel.value = "";
+				btn.remove();
+				PC.toast("Nursing center removed.");
+			}).catch(function (err) {
+				btn.disabled = false;
+				btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Un-Assign';
+				var msg = (err && err._server_messages)
+					? JSON.parse(err._server_messages || "[]").map(function(m){return JSON.parse(m).message;}).join(" ")
+					: "Failed to remove. Please try again.";
+				PC.toast(msg, { urgent: true });
+			});
+		});
+	});
+
+	// Copy link
+	function _markCopied(btn) {
+		var orig = btn.innerHTML;
+		btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Copied!';
+		setTimeout(function () { btn.innerHTML = orig; }, 2000);
+	}
+
+	function _fallbackCopy(text, btn) {
+		var ta = document.createElement("textarea");
+		ta.value = text;
+		ta.style.cssText = "position:fixed;top:0;left:0;width:2em;height:2em;opacity:0;pointer-events:none;";
+		document.body.appendChild(ta);
+		ta.focus();
+		ta.select();
+		try { document.execCommand("copy"); _markCopied(btn); } catch (e) {}
+		document.body.removeChild(ta);
+	}
+
+	window.pcaCopy = function (elId, btn) {
+		var el = document.getElementById(elId);
+		if (!el) return;
+		var url = el.textContent.trim();
+		if (!url) return;
+		if (navigator.clipboard && window.isSecureContext) {
+			navigator.clipboard.writeText(url).then(function () {
+				_markCopied(btn);
+			}).catch(function () {
+				_fallbackCopy(url, btn);
+			});
+		} else {
+			_fallbackCopy(url, btn);
+		}
+	};
+})();
+</script>
+
+<a id="pwHomeBtn" href="/pw-home" title="Control Board">
+	<i class="fa fa-home"></i><span class="pwHBtnTxt">Control Board</span>
+</a>
+
+{% endif %}
+{% endblock %}

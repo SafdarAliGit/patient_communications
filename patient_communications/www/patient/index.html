@@ -1,0 +1,262 @@
+{% extends "templates/web.html" %}
+{% block title %}Patient Communications{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block head_include %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/patient_communications/css/pc.css">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="{{ site_title or 'Patient Portal' }}">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#3d5a99">
+<style>
+.pc-install-banner {
+	position: fixed;
+	bottom: 0; left: 0; right: 0;
+	background: var(--pc-surface);
+	border-top: 1px solid var(--pc-border-soft);
+	box-shadow: 0 -4px 24px rgba(0,0,0,0.13);
+	padding: 14px 16px 18px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	z-index: 200;
+	animation: pcInstallUp 0.32s cubic-bezier(.22,1,.36,1);
+}
+@keyframes pcInstallUp {
+	from { transform: translateY(100%); opacity: 0; }
+	to   { transform: translateY(0);    opacity: 1; }
+}
+.pc-install-app-icon {
+	width: 48px; height: 48px;
+	border-radius: 12px;
+	background: var(--pc-primary);
+	display: flex; align-items: center; justify-content: center;
+	color: #fff;
+	flex-shrink: 0;
+	box-shadow: 0 2px 8px rgba(61,90,153,.35);
+}
+.pc-install-body { flex: 1; min-width: 0; }
+.pc-install-body strong { display: block; font-size: 14px; font-weight: 650; color: var(--pc-text); }
+.pc-install-body span  { display: block; font-size: 12px; color: var(--pc-text-muted); margin-top: 2px; line-height: 1.4; }
+.pc-install-add {
+	padding: 9px 18px;
+	border-radius: 9px;
+	background: var(--pc-primary);
+	color: #fff;
+	border: none;
+	font-size: 13.5px;
+	font-weight: 650;
+	font-family: inherit;
+	cursor: pointer;
+	white-space: nowrap;
+	flex-shrink: 0;
+	transition: background 0.15s;
+}
+.pc-install-add:hover { background: var(--pc-primary-dark); }
+.pc-install-dismiss {
+	padding: 6px;
+	border: none;
+	background: none;
+	cursor: pointer;
+	color: var(--pc-text-faint);
+	flex-shrink: 0;
+	line-height: 0;
+}
+</style>
+{% endblock %}
+
+{% block page_content %}
+
+{% if device_locked %}
+<div class="pc-gate">
+	<div class="pc-gate-card">
+		<div class="pc-gate-icon">
+			<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+		</div>
+		<h2>Link already in use</h2>
+		<p>This portal link is active on another device. Please use the original device, or ask your nursing station for a new link.</p>
+	</div>
+</div>
+{% elif not patient %}
+<div class="pc-gate">
+	<div class="pc-gate-card">
+		<div class="pc-gate-icon">
+			<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 1 1-3.2-6.4M20 4v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+		</div>
+		<h2>Link expired or invalid</h2>
+		<p>Your communication portal link is not active. Please ask your nursing station for a new link.</p>
+	</div>
+</div>
+{% else %}
+<div class="pc-app pc-theme-patient{% if large_touch %} pc-large-touch{% endif %}" id="pc-app" data-patient="{{ patient.name }}" data-token="{{ access_token or '' }}">
+
+	<!-- Top bar -->
+	<div class="pc-topbar">
+		<div class="pc-brand">
+			<div class="pc-brand-mark">
+				<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.35 0-2.6-.33-3.7-.92L3 21l1.92-5.8A8.5 8.5 0 1 1 21 11.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+			</div>
+			<div class="pc-identity">
+				<span class="pc-name">{{ patient.patient_name }}</span>
+				<span class="pc-sub" id="pc-station-name">Connecting&hellip;</span>
+			</div>
+		</div>
+		<div class="pc-status" id="pc-status">
+			<span class="pc-status-dot"></span>
+			<span id="pc-status-text">Connecting</span>
+		</div>
+	</div>
+
+	<div class="pc-main">
+		<div class="pc-thread-wrap">
+			<div class="pc-thread" id="pc-thread"></div>
+			<div class="pc-composer">
+				<button class="pc-icon-btn pc-mic" id="pc-mic-btn" type="button" title="Voice to text" style="display:none;">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</button>
+				<button class="pc-icon-btn pc-urgent-icon" id="pc-urgent-btn" type="button" title="Call Nurse — Urgent">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-2.96L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</button>
+				<textarea id="pc-input" rows="1" placeholder="Message your nursing station…"></textarea>
+				<button class="pc-icon-btn pc-send" id="pc-send-btn" type="button" title="Send">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</button>
+			</div>
+		</div>
+	</div>
+
+</div>
+
+{% if new_device_id %}
+<script>document.cookie = "pc_device_id={{ new_device_id }}; path=/; max-age=31536000; SameSite=Lax";</script>
+{% endif %}
+
+<!-- Add to Home Screen banner -->
+<div class="pc-install-banner" id="pc-install-banner" style="display:none" role="complementary" aria-label="Add to Home Screen">
+	<div class="pc-install-app-icon">
+		<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.35 0-2.6-.33-3.7-.92L3 21l1.92-5.8A8.5 8.5 0 1 1 21 11.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+	</div>
+	<div class="pc-install-body">
+		<strong id="pc-install-title">{{ site_title or 'Patient Portal' }}</strong>
+		<span id="pc-install-hint">Add to your home screen for quick access</span>
+	</div>
+	<button class="pc-install-add" id="pc-install-add" type="button">Add</button>
+	<button class="pc-install-dismiss" id="pc-install-dismiss" type="button" aria-label="Dismiss">
+		<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+	</button>
+</div>
+
+<a id="pwHomeBtn" href="/pw-home" title="Control Board">
+	<i class="fa fa-home"></i><span class="pwHBtnTxt">Control Board</span>
+</a>
+<script src="/assets/patient_communications/js/pc-common.js"></script>
+<script src="/assets/patient_communications/js/pc-patient.js"></script>
+<script>
+(function () {
+	var app = document.getElementById("pc-app");
+	var token = app ? (app.dataset.token || "") : "";
+	var siteTitle = {{ (site_title or 'Patient Portal') | tojson }};
+	var DISMISS_KEY = "pc_ath_dismissed";
+
+	// Already installed or previously dismissed → skip
+	var isStandalone = window.navigator.standalone === true ||
+		window.matchMedia("(display-mode: standalone)").matches;
+	if (isStandalone || localStorage.getItem(DISMISS_KEY)) return;
+
+	var isIOS = /ipad|iphone|ipod/i.test(navigator.userAgent) && !window.MSStream;
+
+	// Inject dynamic manifest so start_url carries the patient token
+	if (token) {
+		var iconSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%233d5a99'/><path d='M145 96.5a48.5 48.5 0 0 1-48.5 48.5c-7.7 0-14.9-1.9-21.2-5.2L47 154l11-33.2A48.5 48.5 0 1 1 145 96.5z' fill='white' opacity='.92'/><path d='M82 92h28M82 108h18' stroke='%233d5a99' stroke-width='7' stroke-linecap='round'/></svg>";
+		var manifest = {
+			name: siteTitle,
+			short_name: siteTitle,
+			description: "Communicate with your nursing station",
+			start_url: location.pathname + location.search,
+			display: "standalone",
+			orientation: "portrait",
+			background_color: "#f8fafc",
+			theme_color: "#3d5a99",
+			icons: [
+				{ src: "data:image/svg+xml," + iconSvg, sizes: "192x192 512x512", type: "image/svg+xml", purpose: "any maskable" }
+			]
+		};
+		try {
+			var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+			var mlink = document.createElement("link");
+			mlink.rel = "manifest";
+			mlink.href = URL.createObjectURL(blob);
+			document.head.appendChild(mlink);
+		} catch (e) {}
+	}
+
+	var banner   = document.getElementById("pc-install-banner");
+	var addBtn   = document.getElementById("pc-install-add");
+	var dimBtn   = document.getElementById("pc-install-dismiss");
+	var hintEl   = document.getElementById("pc-install-hint");
+	var deferredPrompt = null;
+
+	function showBanner() {
+		if (banner) banner.style.display = "flex";
+	}
+	function hideBanner(dismiss) {
+		if (banner) banner.style.display = "none";
+		if (dismiss) localStorage.setItem(DISMISS_KEY, "1");
+	}
+
+	// Android / Chrome – native install prompt
+	window.addEventListener("beforeinstallprompt", function (e) {
+		e.preventDefault();
+		deferredPrompt = e;
+		if (hintEl) hintEl.textContent = "Add to your home screen for quick access";
+		if (addBtn) addBtn.style.display = "";
+		setTimeout(showBanner, 1500);
+	});
+
+	// iOS – show manual instructions
+	if (isIOS) {
+		if (hintEl) hintEl.innerHTML = "Tap <b>Share</b> ↗ then <b>“Add to Home Screen”</b>";
+		if (addBtn) addBtn.style.display = "none";
+		setTimeout(showBanner, 1500);
+	}
+
+	// Fallback for other Android browsers (no prompt event) – show generic instructions
+	if (!isIOS) {
+		window.addEventListener("load", function () {
+			setTimeout(function () {
+				if (!deferredPrompt && !isStandalone && banner && banner.style.display === "none") {
+					if (hintEl) hintEl.innerHTML = "Tap ⋮ menu → <b>Add to Home Screen</b>";
+					if (addBtn) addBtn.style.display = "none";
+					showBanner();
+				}
+			}, 2500);
+		});
+	}
+
+	if (addBtn) {
+		addBtn.addEventListener("click", function () {
+			if (deferredPrompt) {
+				deferredPrompt.prompt();
+				deferredPrompt.userChoice.then(function (choice) {
+					deferredPrompt = null;
+					hideBanner(choice.outcome === "accepted");
+					if (choice.outcome !== "accepted") hideBanner(false);
+				});
+			}
+		});
+	}
+
+	if (dimBtn) {
+		dimBtn.addEventListener("click", function () { hideBanner(true); });
+	}
+
+	// Hide banner once installed
+	window.addEventListener("appinstalled", function () { hideBanner(true); });
+})();
+</script>
+{% endif %}
+{% endblock %}

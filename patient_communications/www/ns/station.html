@@ -1,0 +1,98 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ station.nursing_station_name if station else "Nursing Station" }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block head_include %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/patient_communications/css/pc.css">
+{% endblock %}
+
+{% block page_content %}
+
+{% if not station %}
+<div class="pc-gate">
+	<div class="pc-gate-card">
+		<div class="pc-gate-icon">
+			<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 1 1-3.2-6.4M20 4v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+		</div>
+		<h2>Station not found</h2>
+		<p>This nursing station link is invalid or inactive. Please contact your administrator.</p>
+		<a class="pc-btn" href="/ns">View all stations</a>
+	</div>
+</div>
+{% else %}
+<div class="pc-app" id="pc-app" data-station="{{ station.name }}">
+
+	<!-- Top bar -->
+	<div class="pc-topbar">
+		<div class="pc-brand">
+			<div class="pc-brand-mark">
+				<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.35 0-2.6-.33-3.7-.92L3 21l1.92-5.8A8.5 8.5 0 1 1 21 11.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+			</div>
+			<div class="pc-identity">
+				<span class="pc-name">{{ station.nursing_station_name }}</span>
+				<span class="pc-sub">{{ station.ward_floor or "Nursing Station" }}</span>
+			</div>
+		</div>
+		<div class="pc-topbar-right">
+			<div class="pc-status" id="pc-status">
+				<span class="pc-status-dot"></span>
+				<span id="pc-status-text">Connecting</span>
+			</div>
+		</div>
+	</div>
+
+	<div class="pc-main">
+
+		<!-- Sidebar: patient list -->
+		<div class="pc-sidebar" id="pc-sidebar">
+			<div class="pc-sidebar-head">
+				<span class="pc-sidebar-label">Patients</span>
+				<span class="pc-sidebar-count" id="pc-patient-count"></span>
+			</div>
+			<div class="pc-sidebar-search">
+				<input type="text" id="pc-search" placeholder="Search name, room or bed…" autocomplete="off">
+			</div>
+			<div class="pc-patient-list" id="pc-patient-list">
+				<div class="pc-empty">
+					<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+					Loading patients&hellip;
+				</div>
+			</div>
+		</div>
+
+		<!-- Thread panel -->
+		<div class="pc-thread-wrap is-hidden" id="pc-thread-wrap">
+			<div class="pc-chat-header">
+				<button class="pc-back-btn" id="pc-back-btn" title="Back to patients">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</button>
+				<div class="pc-chat-patient-info">
+					<span class="pc-name" id="pc-active-patient-name"></span>
+					<span class="pc-sub" id="pc-active-patient-sub"></span>
+				</div>
+			</div>
+			<div class="pc-thread" id="pc-thread"></div>
+			<div class="pc-composer">
+				<button class="pc-icon-btn pc-mic" id="pc-mic-btn" type="button" title="Voice input" style="display:none;">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</button>
+				<textarea id="pc-input" rows="1" placeholder="Type a reply…" disabled></textarea>
+				<button class="pc-icon-btn pc-send" id="pc-send-btn" type="button" title="Send" disabled>
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</button>
+			</div>
+		</div>
+
+	</div>
+</div>
+
+<a id="pwHomeBtn" href="/pw-home" title="Control Board">
+	<i class="fa fa-home"></i><span class="pwHBtnTxt">Control Board</span>
+</a>
+<script src="/assets/patient_communications/js/pc-common.js"></script>
+<script src="/assets/patient_communications/js/pc-nurse.js"></script>
+{% endif %}
+{% endblock %}

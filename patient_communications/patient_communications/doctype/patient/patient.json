@@ -1,0 +1,158 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-14 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "patient_name",
+  "mr_no",
+  "gender",
+  "column_break_1",
+  "nursing_station",
+  "room_no",
+  "bed_no",
+  "section_break_1",
+  "is_active",
+  "admission_date",
+  "discharge_date",
+  "column_break_2",
+  "mobile_number",
+  "email",
+  "user_id",
+  "source_customer",
+  "access_token"
+ ],
+ "fields": [
+  {
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Patient Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "mr_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "MR No",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Select",
+   "label": "Gender",
+   "options": "\nMale\nFemale\nOther"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nursing_station",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Nursing Station",
+   "options": "Nursing Station",
+   "reqd": 1
+  },
+  {
+   "fieldname": "room_no",
+   "fieldtype": "Data",
+   "label": "Room No"
+  },
+  {
+   "fieldname": "bed_no",
+   "fieldtype": "Data",
+   "label": "Bed No"
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active (Admitted)"
+  },
+  {
+   "fieldname": "admission_date",
+   "fieldtype": "Datetime",
+   "label": "Admission Date"
+  },
+  {
+   "fieldname": "discharge_date",
+   "fieldtype": "Datetime",
+   "label": "Discharge Date"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mobile_number",
+   "fieldtype": "Data",
+   "label": "Mobile Number",
+   "options": "Phone"
+  },
+  {
+   "description": "Login email for the patient's bedside device account. A User is created/linked automatically.",
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Login Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "user_id",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "source_customer",
+   "fieldtype": "Link",
+   "label": "Source Customer (PW)",
+   "options": "Customer",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "access_token",
+   "fieldtype": "Data",
+   "label": "Portal Access Token",
+   "hidden": 1,
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-14 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Patient Communications",
+ "name": "Patient",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
