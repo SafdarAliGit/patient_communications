@@ -1,4 +1,3 @@
-import uuid
 import frappe
 from frappe import _
 
@@ -30,8 +29,6 @@ def get_context(context):
 	context.patient = None
 	context.access_token = token or ""
 	context.large_touch = frappe.form_dict.get("large") == "1"
-	context.new_device_id = None
-	context.device_locked = False
 
 	if not token:
 		return
@@ -44,29 +41,12 @@ def get_context(context):
 	if not nc:
 		return
 
-	# Device locking: bind on first access, validate on subsequent requests
-	# (only enforced after bench migrate has added the pc_device_id column)
-	try:
-		cols = frappe.db.get_table_columns("Customer")
-		device_field_ready = "pc_device_id" in cols
-	except Exception:
-		device_field_ready = False
-
-	if device_field_ready:
-		stored_device_id = frappe.db.get_value("Customer", name, "pc_device_id")
-		request_device_id = frappe.request.cookies.get("pc_device_id") if frappe.request else None
-
-		if not stored_device_id:
-			# First access — bind this device
-			new_device_id = str(uuid.uuid4())
-			frappe.db.set_value("Customer", name, "pc_device_id", new_device_id, update_modified=False)
-			frappe.db.commit()
-			context.new_device_id = new_device_id
-		elif request_device_id != stored_device_id:
-			# Different device — block access
-			context.device_locked = True
-			return
-
+	# Device binding is intentionally NOT done here.
+	# Link-preview bots (WhatsApp, Telegram, iMessage…) fetch this page
+	# server-side without running JavaScript.  If we bound the device here,
+	# the bot would consume the first-open slot and lock out the real patient.
+	# Binding is handled by the client-side claim_device_token API call in
+	# index.html, which only real browsers (that run JS) can trigger.
 	customer = frappe.db.get_value(
 		"Customer", name,
 		["name", "customer_name", "pc_nursing_center"],
