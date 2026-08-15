@@ -36,14 +36,12 @@ def get_context(context):
 	if not token:
 		return
 
-	from patient_communications.api import _get_active_allotment
-
 	name = frappe.db.get_value("Customer", {"pc_access_token": token}, "name")
 	if not name:
 		return
 
 	nc = frappe.db.get_value("Customer", name, "pc_nursing_center")
-	if not nc or not _get_active_allotment(name):
+	if not nc:
 		return
 
 	# Device locking: bind on first access, validate on subsequent requests

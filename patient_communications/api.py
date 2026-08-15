@@ -254,7 +254,7 @@ def _get_customer_for_token(token):
 	if not name:
 		return None
 	nc = frappe.db.get_value("Customer", name, "pc_nursing_center")
-	if not nc or not _get_active_allotment(name):
+	if not nc:
 		return None
 
 	# Enforce single-device binding (only when column exists)
@@ -446,7 +446,12 @@ def get_communication_link(customer):
 	if not token:
 		token = random_string(32)
 		frappe.db.set_value("Customer", customer, "pc_access_token", token)
-		frappe.db.commit()
+
+	# Reset device binding so the link can be opened on any device
+	if _device_field_ready():
+		frappe.db.set_value("Customer", customer, "pc_device_id", None, update_modified=False)
+
+	frappe.db.commit()
 
 	site_url = frappe.utils.get_url().rstrip("/")
 	portal_url = f"{site_url}/patient?token={token}"
