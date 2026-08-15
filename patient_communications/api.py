@@ -431,6 +431,43 @@ def assign_nursing_center(customer, nursing_center):
 	}
 
 
+# ── PWA manifest (served from a real URL so Chrome fires beforeinstallprompt) ──
+
+@frappe.whitelist(allow_guest=True)
+def get_pwa_manifest(token):
+	if not token:
+		frappe.throw("", frappe.PermissionError)
+	name = frappe.db.get_value("Customer", {"pc_access_token": token}, "name")
+	if not name:
+		frappe.throw("", frappe.PermissionError)
+	try:
+		title = frappe.db.get_single_value("Website Settings", "title") or "Patient Portal"
+	except Exception:
+		title = "Patient Portal"
+	manifest = {
+		"name": title,
+		"short_name": title,
+		"description": "Communicate with your nursing station",
+		"start_url": "/patient?token=" + token,
+		"display": "standalone",
+		"orientation": "portrait",
+		"background_color": "#f8fafc",
+		"theme_color": "#3d5a99",
+		"icons": [
+			{
+				"src": "/assets/patient_communications/images/pc-icon.svg",
+				"sizes": "192x192 512x512",
+				"type": "image/svg+xml",
+				"purpose": "any maskable",
+			}
+		],
+	}
+	# Spread manifest fields into the response root so Chrome receives them
+	# directly (not wrapped under "message").  Returning None prevents Frappe
+	# from adding a "message" key.
+	frappe.local.response.update(manifest)
+
+
 # ── Device claim (called by patient browser JS) ───────────────────────────────
 
 @frappe.whitelist(allow_guest=True)

@@ -12,6 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="{{ site_title or 'Patient Portal' }}">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#3d5a99">
+{% if patient %}<link rel="manifest" href="/api/method/patient_communications.api.get_pwa_manifest?token={{ access_token | urlencode }}">{% endif %}
 <style>
 @keyframes pcSpinRing {
 	to { transform: rotate(360deg); }
@@ -199,63 +200,6 @@
 	var isStandalone = window.navigator.standalone === true ||
 		window.matchMedia("(display-mode: standalone)").matches;
 	if (isStandalone) return;
-
-	var siteTitle = {{ (site_title or 'Patient Portal') | tojson }};
-
-	function makeIconPng(size) {
-		try {
-			var c = document.createElement("canvas");
-			c.width = c.height = size;
-			var ctx = c.getContext("2d");
-			var r = size * 0.208;
-			ctx.beginPath();
-			ctx.moveTo(r, 0); ctx.arcTo(size, 0, size, r, r);
-			ctx.arcTo(size, size, size - r, size, r);
-			ctx.arcTo(0, size, 0, size - r, r);
-			ctx.arcTo(0, 0, r, 0, r);
-			ctx.closePath();
-			ctx.fillStyle = "#3d5a99";
-			ctx.fill();
-			var cx = size / 2, cy = size * 0.48, rad = size * 0.25;
-			ctx.beginPath();
-			ctx.arc(cx, cy, rad, Math.PI * 0.15, Math.PI * 1.15);
-			ctx.arc(cx - rad * 0.6, cy + rad * 0.8, rad * 0.15, Math.PI * 1.15, Math.PI * 0.15, true);
-			ctx.closePath();
-			ctx.fillStyle = "rgba(255,255,255,0.92)";
-			ctx.fill();
-			ctx.strokeStyle = "#3d5a99";
-			ctx.lineWidth = size * 0.037;
-			ctx.lineCap = "round";
-			ctx.beginPath(); ctx.moveTo(cx - size*0.1, cy - size*0.04); ctx.lineTo(cx + size*0.1, cy - size*0.04); ctx.stroke();
-			ctx.beginPath(); ctx.moveTo(cx - size*0.1, cy + size*0.04); ctx.lineTo(cx + size*0.065, cy + size*0.04); ctx.stroke();
-			return c.toDataURL("image/png");
-		} catch (e) { return null; }
-	}
-
-	var icon192 = makeIconPng(192);
-	var icon512 = makeIconPng(512);
-	var icons = [];
-	if (icon192) icons.push({ src: icon192, sizes: "192x192", type: "image/png", purpose: "any maskable" });
-	if (icon512) icons.push({ src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" });
-
-	var manifest = {
-		name: siteTitle,
-		short_name: siteTitle,
-		description: "Communicate with your nursing station",
-		start_url: location.pathname + location.search,
-		display: "standalone",
-		orientation: "portrait",
-		background_color: "#f8fafc",
-		theme_color: "#3d5a99",
-		icons: icons
-	};
-	try {
-		var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
-		var mlink = document.createElement("link");
-		mlink.rel = "manifest";
-		mlink.href = URL.createObjectURL(blob);
-		document.head.appendChild(mlink);
-	} catch (e) {}
 
 	// Register service worker — required by Chrome for PWA installability.
 	// The sw lives at root scope so it can cover /patient paths.
