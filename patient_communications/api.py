@@ -257,14 +257,6 @@ def _get_customer_for_token(token):
 	if not nc:
 		return None
 
-	# Enforce single-device binding (only when column exists)
-	if _device_field_ready():
-		stored_device_id = frappe.db.get_value("Customer", name, "pc_device_id")
-		if stored_device_id:
-			request_device_id = frappe.request.cookies.get("pc_device_id") if frappe.request else None
-			if request_device_id != stored_device_id:
-				return None
-
 	return frappe.get_doc("Customer", name)
 
 
