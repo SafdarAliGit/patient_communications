@@ -173,7 +173,7 @@
 <script src="/assets/patient_communications/js/pc-patient.js"></script>
 
 <script>
-// ── Inject PWA manifest early so the browser can find it immediately ──────────
+// ── PWA setup: manifest + service worker + early event capture ────────────────
 (function () {
 	var token = {{ (access_token or '') | tojson }};
 	if (!token) return;
@@ -201,6 +201,32 @@
 		mlink.href = URL.createObjectURL(blob);
 		document.head.appendChild(mlink);
 	} catch (e) {}
+
+	// Register service worker — required by Chrome for PWA installability.
+	// The sw lives at root scope so it can cover /patient paths.
+	if ("serviceWorker" in navigator) {
+		navigator.serviceWorker.register("/pc-sw.js").catch(function () {});
+	}
+
+	// Capture beforeinstallprompt NOW — it fires once, early in the page
+	// lifecycle.  If we waited until initInstallPrompt() (called post-claim)
+	// we would always miss it.  Store globally; initInstallPrompt picks it up.
+	window._pcInstallEvent = null;
+	window.addEventListener("beforeinstallprompt", function (e) {
+		e.preventDefault();
+		window._pcInstallEvent = e;
+		// If initInstallPrompt already ran before the event fired, call it.
+		if (typeof window._pcInstallCallback === "function") {
+			window._pcInstallCallback(e);
+		}
+	});
+
+	window.addEventListener("appinstalled", function () {
+		window._pcInstallEvent = null;
+		var banner = document.getElementById("pc-install-banner");
+		if (banner) banner.style.display = "none";
+		try { localStorage.setItem("pc_ath_dismissed", "1"); } catch (e) {}
+	});
 })();
 </script>
 
@@ -223,7 +249,6 @@ function initInstallPrompt(isFirstOpen) {
 	var addBtn = document.getElementById("pc-install-add");
 	var dimBtn = document.getElementById("pc-install-dismiss");
 	var hintEl = document.getElementById("pc-install-hint");
-	var deferredPrompt = null;
 
 	if (isFirstOpen) {
 		if (hintEl) hintEl.textContent = "Save a shortcut so you can reach your nursing station instantly";
@@ -236,49 +261,48 @@ function initInstallPrompt(isFirstOpen) {
 		if (persist) localStorage.setItem(DISMISS_KEY, "1");
 	}
 
-	window.addEventListener("beforeinstallprompt", function (e) {
-		e.preventDefault();
-		deferredPrompt = e;
+	function bindPrompt(e) {
 		if (!isFirstOpen && hintEl) hintEl.textContent = "Add to your home screen for quick access";
 		if (addBtn) addBtn.style.display = "";
 		isFirstOpen ? showBanner() : setTimeout(showBanner, 1500);
-	});
+		if (addBtn) {
+			addBtn.addEventListener("click", function () {
+				e.prompt();
+				e.userChoice.then(function (choice) {
+					window._pcInstallEvent = null;
+					hideBanner(choice.outcome === "accepted");
+				});
+			});
+		}
+	}
+
+	if (window._pcInstallEvent) {
+		bindPrompt(window._pcInstallEvent);
+	} else {
+		window._pcInstallCallback = bindPrompt;
+	}
 
 	if (isIOS) {
 		if (hintEl) hintEl.innerHTML = isFirstOpen
-			? "Tap <b>Share</b> ↗ then <b>"Add to Home Screen"</b> to save your portal shortcut"
-			: "Tap <b>Share</b> ↗ then <b>"Add to Home Screen"</b>";
+			? "Tap <b>Share</b> &#x2197; then <b>&ldquo;Add to Home Screen&rdquo;</b> to save your portal shortcut"
+			: "Tap <b>Share</b> &#x2197; then <b>&ldquo;Add to Home Screen&rdquo;</b>";
 		if (addBtn) addBtn.style.display = "none";
 		isFirstOpen ? showBanner() : setTimeout(showBanner, 1500);
 	}
 
 	if (!isIOS) {
-		window.addEventListener("load", function () {
-			setTimeout(function () {
-				if (!deferredPrompt && !isStandalone && banner && banner.style.display === "none") {
-					if (hintEl) hintEl.innerHTML = isFirstOpen
-						? "Tap ⋮ menu → <b>Add to Home Screen</b> to save your portal shortcut"
-						: "Tap ⋮ menu → <b>Add to Home Screen</b>";
-					if (addBtn) addBtn.style.display = "none";
-					showBanner();
-				}
-			}, isFirstOpen ? 800 : 2500);
-		});
+		setTimeout(function () {
+			if (!window._pcInstallEvent && !isStandalone && banner && banner.style.display === "none") {
+				if (hintEl) hintEl.innerHTML = isFirstOpen
+					? "Tap &#x22EE; menu &#x2192; <b>Add to Home Screen</b> to save your portal shortcut"
+					: "Tap &#x22EE; menu &#x2192; <b>Add to Home Screen</b>";
+				if (addBtn) addBtn.style.display = "none";
+				showBanner();
+			}
+		}, isFirstOpen ? 800 : 2500);
 	}
 
-	if (addBtn) {
-		addBtn.addEventListener("click", function () {
-			if (deferredPrompt) {
-				deferredPrompt.prompt();
-				deferredPrompt.userChoice.then(function (choice) {
-					deferredPrompt = null;
-					hideBanner(choice.outcome === "accepted");
-				});
-			}
-		});
-	}
 	if (dimBtn) dimBtn.addEventListener("click", function () { hideBanner(true); });
-	window.addEventListener("appinstalled", function () { hideBanner(true); });
 }
 </script>
 

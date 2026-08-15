@@ -128,7 +128,7 @@ PC.VoiceInput = function (opts) {
 	this.recognition = new SpeechRecognitionImpl();
 	this.recognition.continuous = false;
 	this.recognition.interimResults = true;
-	this.recognition.lang = opts.lang || "en-US";
+	this.recognition.lang = "lang" in opts ? opts.lang : "";
 
 	const self = this;
 

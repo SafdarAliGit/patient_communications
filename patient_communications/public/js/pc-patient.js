@@ -199,7 +199,6 @@ frappe.ready(function () {
 
 	// ---- Voice to text ----
 	const voice = new PC.VoiceInput({
-		lang: "en-US",
 		onStart: () => $micBtn.classList.add("is-recording"),
 		onEnd: () => $micBtn.classList.remove("is-recording"),
 		onInterim: (text) => {
