@@ -166,11 +166,11 @@
 	</button>
 </div>
 
-<a id=”pwHomeBtn” href=”/pw-home” title=”Control Board”>
-	<i class=”fa fa-home”></i><span class=”pwHBtnTxt”>Control Board</span>
+<a id="pwHomeBtn" href="/pw-home" title="Control Board">
+	<i class="fa fa-home"></i><span class="pwHBtnTxt">Control Board</span>
 </a>
-<script src=”/assets/patient_communications/js/pc-common.js”></script>
-<script src=”/assets/patient_communications/js/pc-patient.js”></script>
+<script src="/assets/patient_communications/js/pc-common.js"></script>
+<script src="/assets/patient_communications/js/pc-patient.js"></script>
 
 <script>
 // ── Inject PWA manifest early so the browser can find it immediately ──────────
@@ -178,26 +178,26 @@
 	var token = {{ (access_token or '') | tojson }};
 	if (!token) return;
 	var isStandalone = window.navigator.standalone === true ||
-		window.matchMedia(“(display-mode: standalone)”).matches;
+		window.matchMedia("(display-mode: standalone)").matches;
 	if (isStandalone) return;
 
 	var siteTitle = {{ (site_title or 'Patient Portal') | tojson }};
-	var iconSvg = “<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%233d5a99'/><path d='M145 96.5a48.5 48.5 0 0 1-48.5 48.5c-7.7 0-14.9-1.9-21.2-5.2L47 154l11-33.2A48.5 48.5 0 1 1 145 96.5z' fill='white' opacity='.92'/><path d='M82 92h28M82 108h18' stroke='%233d5a99' stroke-width='7' stroke-linecap='round'/></svg>”;
+	var iconSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%233d5a99'/><path d='M145 96.5a48.5 48.5 0 0 1-48.5 48.5c-7.7 0-14.9-1.9-21.2-5.2L47 154l11-33.2A48.5 48.5 0 1 1 145 96.5z' fill='white' opacity='.92'/><path d='M82 92h28M82 108h18' stroke='%233d5a99' stroke-width='7' stroke-linecap='round'/></svg>";
 	var manifest = {
 		name: siteTitle,
 		short_name: siteTitle,
-		description: “Communicate with your nursing station”,
+		description: "Communicate with your nursing station",
 		start_url: location.pathname + location.search,
-		display: “standalone”,
-		orientation: “portrait”,
-		background_color: “#f8fafc”,
-		theme_color: “#3d5a99”,
-		icons: [{ src: “data:image/svg+xml,” + iconSvg, sizes: “192x192 512x512”, type: “image/svg+xml”, purpose: “any maskable” }]
+		display: "standalone",
+		orientation: "portrait",
+		background_color: "#f8fafc",
+		theme_color: "#3d5a99",
+		icons: [{ src: "data:image/svg+xml," + iconSvg, sizes: "192x192 512x512", type: "image/svg+xml", purpose: "any maskable" }]
 	};
 	try {
-		var blob = new Blob([JSON.stringify(manifest)], { type: “application/manifest+json” });
-		var mlink = document.createElement(“link”);
-		mlink.rel = “manifest”;
+		var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+		var mlink = document.createElement("link");
+		mlink.rel = "manifest";
 		mlink.href = URL.createObjectURL(blob);
 		document.head.appendChild(mlink);
 	} catch (e) {}
@@ -207,9 +207,9 @@
 <script>
 // ── Install-prompt handler (called after claim confirms device) ───────────────
 function initInstallPrompt(isFirstOpen) {
-	var DISMISS_KEY = “pc_ath_dismissed”;
+	var DISMISS_KEY = "pc_ath_dismissed";
 	var isStandalone = window.navigator.standalone === true ||
-		window.matchMedia(“(display-mode: standalone)”).matches;
+		window.matchMedia("(display-mode: standalone)").matches;
 	if (isStandalone) return;
 
 	if (isFirstOpen) {
@@ -219,47 +219,47 @@ function initInstallPrompt(isFirstOpen) {
 	}
 
 	var isIOS = /ipad|iphone|ipod/i.test(navigator.userAgent) && !window.MSStream;
-	var banner = document.getElementById(“pc-install-banner”);
-	var addBtn = document.getElementById(“pc-install-add”);
-	var dimBtn = document.getElementById(“pc-install-dismiss”);
-	var hintEl = document.getElementById(“pc-install-hint”);
+	var banner = document.getElementById("pc-install-banner");
+	var addBtn = document.getElementById("pc-install-add");
+	var dimBtn = document.getElementById("pc-install-dismiss");
+	var hintEl = document.getElementById("pc-install-hint");
 	var deferredPrompt = null;
 
 	if (isFirstOpen) {
-		if (hintEl) hintEl.textContent = “Save a shortcut so you can reach your nursing station instantly”;
-		if (dimBtn) dimBtn.style.display = “none”;
+		if (hintEl) hintEl.textContent = "Save a shortcut so you can reach your nursing station instantly";
+		if (dimBtn) dimBtn.style.display = "none";
 	}
 
-	function showBanner() { if (banner) banner.style.display = “flex”; }
+	function showBanner() { if (banner) banner.style.display = "flex"; }
 	function hideBanner(persist) {
-		if (banner) banner.style.display = “none”;
-		if (persist) localStorage.setItem(DISMISS_KEY, “1”);
+		if (banner) banner.style.display = "none";
+		if (persist) localStorage.setItem(DISMISS_KEY, "1");
 	}
 
-	window.addEventListener(“beforeinstallprompt”, function (e) {
+	window.addEventListener("beforeinstallprompt", function (e) {
 		e.preventDefault();
 		deferredPrompt = e;
-		if (!isFirstOpen && hintEl) hintEl.textContent = “Add to your home screen for quick access”;
-		if (addBtn) addBtn.style.display = “”;
+		if (!isFirstOpen && hintEl) hintEl.textContent = "Add to your home screen for quick access";
+		if (addBtn) addBtn.style.display = "";
 		isFirstOpen ? showBanner() : setTimeout(showBanner, 1500);
 	});
 
 	if (isIOS) {
 		if (hintEl) hintEl.innerHTML = isFirstOpen
-			? “Tap <b>Share</b> ↗ then <b>“Add to Home Screen”</b> to save your portal shortcut”
-			: “Tap <b>Share</b> ↗ then <b>“Add to Home Screen”</b>”;
-		if (addBtn) addBtn.style.display = “none”;
+			? "Tap <b>Share</b> ↗ then <b>"Add to Home Screen"</b> to save your portal shortcut"
+			: "Tap <b>Share</b> ↗ then <b>"Add to Home Screen"</b>";
+		if (addBtn) addBtn.style.display = "none";
 		isFirstOpen ? showBanner() : setTimeout(showBanner, 1500);
 	}
 
 	if (!isIOS) {
-		window.addEventListener(“load”, function () {
+		window.addEventListener("load", function () {
 			setTimeout(function () {
-				if (!deferredPrompt && !isStandalone && banner && banner.style.display === “none”) {
+				if (!deferredPrompt && !isStandalone && banner && banner.style.display === "none") {
 					if (hintEl) hintEl.innerHTML = isFirstOpen
-						? “Tap ⋮ menu → <b>Add to Home Screen</b> to save your portal shortcut”
-						: “Tap ⋮ menu → <b>Add to Home Screen</b>”;
-					if (addBtn) addBtn.style.display = “none”;
+						? "Tap ⋮ menu → <b>Add to Home Screen</b> to save your portal shortcut"
+						: "Tap ⋮ menu → <b>Add to Home Screen</b>";
+					if (addBtn) addBtn.style.display = "none";
 					showBanner();
 				}
 			}, isFirstOpen ? 800 : 2500);
@@ -267,18 +267,18 @@ function initInstallPrompt(isFirstOpen) {
 	}
 
 	if (addBtn) {
-		addBtn.addEventListener(“click”, function () {
+		addBtn.addEventListener("click", function () {
 			if (deferredPrompt) {
 				deferredPrompt.prompt();
 				deferredPrompt.userChoice.then(function (choice) {
 					deferredPrompt = null;
-					hideBanner(choice.outcome === “accepted”);
+					hideBanner(choice.outcome === "accepted");
 				});
 			}
 		});
 	}
-	if (dimBtn) dimBtn.addEventListener(“click”, function () { hideBanner(true); });
-	window.addEventListener(“appinstalled”, function () { hideBanner(true); });
+	if (dimBtn) dimBtn.addEventListener("click", function () { hideBanner(true); });
+	window.addEventListener("appinstalled", function () { hideBanner(true); });
 }
 </script>
 
@@ -288,27 +288,27 @@ function initInstallPrompt(isFirstOpen) {
 	var token = {{ (access_token or '') | tojson }};
 	if (!token) return;
 
-	var gateLoading = document.getElementById(“pc-gate-loading”);
-	var gateLocked  = document.getElementById(“pc-gate-locked”);
-	var appEl       = document.getElementById(“pc-app”);
+	var gateLoading = document.getElementById("pc-gate-loading");
+	var gateLocked  = document.getElementById("pc-gate-locked");
+	var appEl       = document.getElementById("pc-app");
 	var settled     = false;
 
 	function showLocked() {
 		if (settled) return;
 		settled = true;
-		if (gateLoading) gateLoading.style.display = “none”;
-		if (gateLocked)  gateLocked.style.display  = “”;
+		if (gateLoading) gateLoading.style.display = "none";
+		if (gateLocked)  gateLocked.style.display  = "";
 	}
 
 	function showApp(firstOpen, deviceId) {
 		if (settled) return;
 		settled = true;
 		if (firstOpen && deviceId) {
-			document.cookie = “pc_device_id=” + deviceId + “; path=/; max-age=31536000; SameSite=Lax”;
+			document.cookie = "pc_device_id=" + deviceId + "; path=/; max-age=31536000; SameSite=Lax";
 		}
-		if (gateLoading) gateLoading.style.display = “none”;
-		if (appEl)       appEl.style.display       = “”;
-		if (typeof initInstallPrompt === “function”) initInstallPrompt(!!firstOpen);
+		if (gateLoading) gateLoading.style.display = "none";
+		if (appEl)       appEl.style.display       = "";
+		if (typeof initInstallPrompt === "function") initInstallPrompt(!!firstOpen);
 	}
 
 	// Hard timeout: if the API call doesn't settle in 6 s for any reason,
@@ -320,17 +320,17 @@ function initInstallPrompt(isFirstOpen) {
 	// without calling the error callback), which would leave the Promise
 	// pending and the loading screen stuck forever.
 	var body = new URLSearchParams();
-	body.append(“token”, token);
+	body.append("token", token);
 
-	fetch(“/api/method/patient_communications.api.claim_device_token”, {
-		method: “POST”,
-		credentials: “same-origin”,
+	fetch("/api/method/patient_communications.api.claim_device_token", {
+		method: "POST",
+		credentials: "same-origin",
 		body: body
 	})
 	.then(function (r) { return r.json(); })
 	.then(function (data) {
 		var result = (data || {}).message || {};
-		if (result.status === “locked” || result.status === “invalid”) {
+		if (result.status === "locked" || result.status === "invalid") {
 			showLocked();
 		} else {
 			showApp(!!result.first_open, result.device_id || null);
