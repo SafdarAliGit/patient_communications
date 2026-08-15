@@ -23,59 +23,78 @@
 	border-radius: 50%;
 	animation: pcSpinRing 0.8s linear infinite;
 }
-.pc-install-banner {
+.pc-install-overlay {
 	position: fixed;
-	bottom: 0; left: 0; right: 0;
-	background: var(--pc-surface);
-	border-top: 1px solid var(--pc-border-soft);
-	box-shadow: 0 -4px 24px rgba(0,0,0,0.13);
-	padding: 14px 16px 18px;
+	inset: 0;
+	background: rgba(0,0,0,0.48);
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	z-index: 200;
-	animation: pcInstallUp 0.32s cubic-bezier(.22,1,.36,1);
+	justify-content: center;
+	z-index: 300;
+	padding: 24px;
+	animation: pcFadeIn 0.2s ease;
 }
-@keyframes pcInstallUp {
-	from { transform: translateY(100%); opacity: 0; }
+@keyframes pcFadeIn {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+.pc-install-card {
+	background: var(--pc-surface);
+	border-radius: 20px;
+	padding: 28px 24px 20px;
+	width: 100%;
+	max-width: 340px;
+	box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+	text-align: center;
+	animation: pcSlideUp 0.25s cubic-bezier(.22,1,.36,1);
+}
+@keyframes pcSlideUp {
+	from { transform: translateY(20px); opacity: 0; }
 	to   { transform: translateY(0);    opacity: 1; }
 }
-.pc-install-app-icon {
-	width: 48px; height: 48px;
-	border-radius: 12px;
+.pc-install-icon {
+	width: 64px; height: 64px;
+	border-radius: 16px;
 	background: var(--pc-primary);
 	display: flex; align-items: center; justify-content: center;
 	color: #fff;
-	flex-shrink: 0;
-	box-shadow: 0 2px 8px rgba(61,90,153,.35);
+	margin: 0 auto 16px;
+	box-shadow: 0 4px 16px rgba(61,90,153,.4);
 }
-.pc-install-body { flex: 1; min-width: 0; }
-.pc-install-body strong { display: block; font-size: 14px; font-weight: 650; color: var(--pc-text); }
-.pc-install-body span  { display: block; font-size: 12px; color: var(--pc-text-muted); margin-top: 2px; line-height: 1.4; }
-.pc-install-add {
-	padding: 9px 18px;
-	border-radius: 9px;
+.pc-install-card h3 {
+	font-size: 17px; font-weight: 700;
+	color: var(--pc-text);
+	margin: 0 0 8px;
+}
+.pc-install-card p {
+	font-size: 13.5px;
+	color: var(--pc-text-muted);
+	margin: 0 0 22px;
+	line-height: 1.5;
+}
+.pc-install-actions { display: flex; gap: 10px; }
+.pc-install-cancel {
+	flex: 1;
+	padding: 11px;
+	border-radius: 10px;
+	border: 1.5px solid var(--pc-border-soft);
+	background: none;
+	color: var(--pc-text-muted);
+	font-size: 14px; font-weight: 600; font-family: inherit;
+	cursor: pointer;
+}
+.pc-install-ok {
+	flex: 2;
+	padding: 11px;
+	border-radius: 10px;
+	border: none;
 	background: var(--pc-primary);
 	color: #fff;
-	border: none;
-	font-size: 13.5px;
-	font-weight: 650;
-	font-family: inherit;
+	font-size: 14px; font-weight: 650; font-family: inherit;
 	cursor: pointer;
-	white-space: nowrap;
-	flex-shrink: 0;
 	transition: background 0.15s;
 }
-.pc-install-add:hover { background: var(--pc-primary-dark); }
-.pc-install-dismiss {
-	padding: 6px;
-	border: none;
-	background: none;
-	cursor: pointer;
-	color: var(--pc-text-faint);
-	flex-shrink: 0;
-	line-height: 0;
-}
+.pc-install-ok:hover { background: var(--pc-primary-dark); }
 </style>
 {% endblock %}
 
@@ -151,19 +170,19 @@
 
 </div>
 
-<!-- Add to Home Screen banner -->
-<div class="pc-install-banner" id="pc-install-banner" style="display:none" role="complementary" aria-label="Add to Home Screen">
-	<div class="pc-install-app-icon">
-		<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.35 0-2.6-.33-3.7-.92L3 21l1.92-5.8A8.5 8.5 0 1 1 21 11.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+<!-- Add to Home Screen popup -->
+<div class="pc-install-overlay" id="pc-install-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Add to Home Screen">
+	<div class="pc-install-card">
+		<div class="pc-install-icon">
+			<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.35 0-2.6-.33-3.7-.92L3 21l1.92-5.8A8.5 8.5 0 1 1 21 11.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+		</div>
+		<h3 id="pc-install-title">Add to Home Screen</h3>
+		<p id="pc-install-hint">Get quick access to your nursing station without opening the browser.</p>
+		<div class="pc-install-actions">
+			<button class="pc-install-cancel" id="pc-install-dismiss" type="button">Not Now</button>
+			<button class="pc-install-ok" id="pc-install-add" type="button">Add Shortcut</button>
+		</div>
 	</div>
-	<div class="pc-install-body">
-		<strong id="pc-install-title">{{ site_title or 'Patient Portal' }}</strong>
-		<span id="pc-install-hint">Add to your home screen for quick access</span>
-	</div>
-	<button class="pc-install-add" id="pc-install-add" type="button">Add</button>
-	<button class="pc-install-dismiss" id="pc-install-dismiss" type="button" aria-label="Dismiss">
-		<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-	</button>
 </div>
 
 <a id="pwHomeBtn" href="/pw-home" title="Control Board">
@@ -268,8 +287,8 @@
 
 	window.addEventListener("appinstalled", function () {
 		window._pcInstallEvent = null;
-		var banner = document.getElementById("pc-install-banner");
-		if (banner) banner.style.display = "none";
+		var overlay = document.getElementById("pc-install-overlay");
+		if (overlay) overlay.style.display = "none";
 		try { localStorage.setItem("pc_ath_dismissed", "1"); } catch (e) {}
 	});
 })();
@@ -290,64 +309,51 @@ function initInstallPrompt(isFirstOpen) {
 	}
 
 	var isIOS = /ipad|iphone|ipod/i.test(navigator.userAgent) && !window.MSStream;
-	var banner = document.getElementById("pc-install-banner");
-	var addBtn = document.getElementById("pc-install-add");
-	var dimBtn = document.getElementById("pc-install-dismiss");
-	var hintEl = document.getElementById("pc-install-hint");
+	var overlay = document.getElementById("pc-install-overlay");
+	var addBtn  = document.getElementById("pc-install-add");
+	var dimBtn  = document.getElementById("pc-install-dismiss");
+	var hintEl  = document.getElementById("pc-install-hint");
 
-	if (isFirstOpen) {
-		if (hintEl) hintEl.textContent = "Save a shortcut so you can reach your nursing station instantly";
-		if (dimBtn) dimBtn.style.display = "none";
-	}
-
-	function showBanner() { if (banner) banner.style.display = "flex"; }
-	function hideBanner(persist) {
-		if (banner) banner.style.display = "none";
+	function showModal() { if (overlay) overlay.style.display = "flex"; }
+	function hideModal(persist) {
+		if (overlay) overlay.style.display = "none";
 		if (persist) localStorage.setItem(DISMISS_KEY, "1");
 	}
 
+	if (dimBtn) dimBtn.addEventListener("click", function () { hideModal(true); });
+
+	if (isIOS) {
+		if (hintEl) hintEl.innerHTML = "Tap <b>Share &#x2197;</b> then select <b>&ldquo;Add to Home Screen&rdquo;</b>.";
+		if (addBtn) { addBtn.textContent = "OK"; addBtn.addEventListener("click", function () { hideModal(true); }); }
+		isFirstOpen ? showModal() : setTimeout(showModal, 1500);
+		return;
+	}
+
 	function bindPrompt(e) {
-		if (!isFirstOpen && hintEl) hintEl.textContent = "Add to your home screen for quick access";
-		if (addBtn) addBtn.style.display = "";
-		isFirstOpen ? showBanner() : setTimeout(showBanner, 1500);
+		if (hintEl) hintEl.innerHTML = "Get quick access to your nursing station without opening the browser.";
 		if (addBtn) {
-			addBtn.addEventListener("click", function () {
+			addBtn.textContent = "Add Shortcut";
+			addBtn.onclick = function () {
 				e.prompt();
 				e.userChoice.then(function (choice) {
 					window._pcInstallEvent = null;
-					hideBanner(choice.outcome === "accepted");
+					hideModal(choice.outcome === "accepted");
 				});
-			});
+			};
 		}
+		isFirstOpen ? showModal() : setTimeout(showModal, 1500);
 	}
 
 	if (window._pcInstallEvent) {
 		bindPrompt(window._pcInstallEvent);
 	} else {
-		window._pcInstallCallback = bindPrompt;
+		if (hintEl) hintEl.innerHTML = "Tap the <b>&#x22EE; menu</b> in your browser, then select <b>Add to Home Screen</b>.";
+		if (addBtn) { addBtn.textContent = "OK"; addBtn.addEventListener("click", function () { hideModal(true); }); }
+		window._pcInstallCallback = function (e) {
+			bindPrompt(e);
+		};
+		isFirstOpen ? showModal() : setTimeout(showModal, 1500);
 	}
-
-	if (isIOS) {
-		if (hintEl) hintEl.innerHTML = isFirstOpen
-			? "Tap <b>Share</b> &#x2197; then <b>&ldquo;Add to Home Screen&rdquo;</b> to save your portal shortcut"
-			: "Tap <b>Share</b> &#x2197; then <b>&ldquo;Add to Home Screen&rdquo;</b>";
-		if (addBtn) addBtn.style.display = "none";
-		isFirstOpen ? showBanner() : setTimeout(showBanner, 1500);
-	}
-
-	if (!isIOS) {
-		setTimeout(function () {
-			if (!window._pcInstallEvent && !isStandalone && banner && banner.style.display === "none") {
-				if (hintEl) hintEl.innerHTML = isFirstOpen
-					? "Tap &#x22EE; menu &#x2192; <b>Add to Home Screen</b> to save your portal shortcut"
-					: "Tap &#x22EE; menu &#x2192; <b>Add to Home Screen</b>";
-				if (addBtn) addBtn.style.display = "none";
-				showBanner();
-			}
-		}, isFirstOpen ? 800 : 2500);
-	}
-
-	if (dimBtn) dimBtn.addEventListener("click", function () { hideBanner(true); });
 }
 </script>
 
