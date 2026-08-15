@@ -292,13 +292,18 @@ function initInstallPrompt(isFirstOpen) {
 	var gateLoading = document.getElementById(“pc-gate-loading”);
 	var gateLocked  = document.getElementById(“pc-gate-locked”);
 	var appEl       = document.getElementById(“pc-app”);
+	var settled     = false;
 
 	function showLocked() {
+		if (settled) return;
+		settled = true;
 		if (gateLoading) gateLoading.style.display = “none”;
 		if (gateLocked)  gateLocked.style.display  = “”;
 	}
 
 	function showApp(firstOpen, deviceId) {
+		if (settled) return;
+		settled = true;
 		if (firstOpen && deviceId) {
 			document.cookie = “pc_device_id=” + deviceId + “; path=/; max-age=31536000; SameSite=Lax”;
 		}
@@ -310,23 +315,39 @@ function initInstallPrompt(isFirstOpen) {
 		s.src = “/assets/patient_communications/js/pc-patient.js”;
 		document.body.appendChild(s);
 
-		initInstallPrompt(!!firstOpen);
+		if (typeof initInstallPrompt === “function”) initInstallPrompt(!!firstOpen);
 	}
 
-	PC.call(“patient_communications.api.claim_device_token”, { token: token })
-		.then(function (result) {
-			if (!result || result.status === “locked” || result.status === “invalid”) {
-				showLocked();
-			} else {
-				showApp(result.first_open, result.device_id || null);
-			}
-		})
-		.catch(function () {
-			// Network error — optimistically show the app so the patient isn't
-			// stuck on a loading screen; the API endpoints will validate the
-			// device cookie on every subsequent call.
-			showApp(false, null);
-		});
+	// Hard timeout: if the API call doesn't settle in 6 s for any reason,
+	// show the app anyway so the patient is never permanently stuck.
+	setTimeout(function () { showApp(false, null); }, 6000);
+
+	// Use native fetch instead of frappe.call — frappe.call can silently
+	// swallow errors on guest pages (e.g. showing a server-messages alert
+	// without calling the error callback), which would leave the Promise
+	// pending and the loading screen stuck forever.
+	var body = new URLSearchParams();
+	body.append(“token”, token);
+
+	fetch(“/api/method/patient_communications.api.claim_device_token”, {
+		method: “POST”,
+		credentials: “same-origin”,
+		body: body
+	})
+	.then(function (r) { return r.json(); })
+	.then(function (data) {
+		var result = (data || {}).message || {};
+		if (result.status === “locked” || result.status === “invalid”) {
+			showLocked();
+		} else {
+			showApp(!!result.first_open, result.device_id || null);
+		}
+	})
+	.catch(function () {
+		// Network error or non-JSON response — show the app optimistically;
+		// every subsequent API call re-validates the device cookie anyway.
+		showApp(false, null);
+	});
 })();
 </script>
 {% endif %}
