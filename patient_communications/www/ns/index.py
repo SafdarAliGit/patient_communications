@@ -15,6 +15,15 @@ def get_context(context):
 		frappe.local.flags.redirect_location = "/login?redirect-to=/ns"
 		raise frappe.Redirect
 
+	try:
+		from prescription_writter.utils import get_pac_for_user
+		pac = get_pac_for_user(frappe.session.user)
+		if not pac.get("show_ns"):
+			frappe.local.flags.redirect_location = "/pw-home"
+			raise frappe.Redirect(302)
+	except ImportError:
+		pass
+
 	stations = frappe.get_all(
 		"Nursing Station",
 		filters={"is_active": 1},

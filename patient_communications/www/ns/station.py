@@ -18,7 +18,15 @@ def get_context(context):
 		frappe.local.flags.redirect_location = f"/login?redirect-to=/ns/{slug}"
 		raise frappe.Redirect
 
-	# Any authenticated staff member can open a station by slug
+	try:
+		from prescription_writter.utils import get_pac_for_user
+		pac = get_pac_for_user(frappe.session.user)
+		if not pac.get("show_ns"):
+			frappe.local.flags.redirect_location = "/pw-home"
+			raise frappe.Redirect(302)
+	except ImportError:
+		pass
+
 	all_stations = frappe.get_all(
 		"Nursing Station",
 		filters={"is_active": 1},

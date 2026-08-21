@@ -23,13 +23,21 @@ def get_context(context):
 		frappe.local.flags.redirect_location = "/login?redirect-to=/pc-assign"
 		raise frappe.Redirect
 
-	from patient_communications.api import _STAFF_ROLES, _pw_installed
+	from patient_communications.api import _pw_installed
 
-	if not (set(frappe.get_roles(frappe.session.user)) & _STAFF_ROLES):
-		context.not_authorized = True
-		context.patients = []
-		context.nursing_stations = []
-		return
+	try:
+		from prescription_writter.utils import get_pac_for_user
+		pac = get_pac_for_user(frappe.session.user)
+		if not pac.get("show_pc_assign"):
+			frappe.local.flags.redirect_location = "/pw-home"
+			raise frappe.Redirect(302)
+	except ImportError:
+		from patient_communications.api import _STAFF_ROLES
+		if not (set(frappe.get_roles(frappe.session.user)) & _STAFF_ROLES):
+			context.not_authorized = True
+			context.patients = []
+			context.nursing_stations = []
+			return
 
 	context.not_authorized = False
 
